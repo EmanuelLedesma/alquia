@@ -29,9 +29,11 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 - [Unidad 9.7] Fix de validación visible en formulario (mensaje "Faltan campos requeridos").
 - [Unidad 9.8] Fix de cálculo de total (base + recambio) con reactividad correcta.
 - [Unidad 9.9] Refactor de calendario a galería por temporada — reemplazo de AvailabilityCalendar por YearGallery con MiniMonthGrid y SeasonFilter.
+- [Unidad 9.10] Vista AlquileresView (Gestión de Alquileres) — tabla con filtros (año, inmueble, estado, búsqueda), badges de estado, formato moneda, sin acciones. Ruta `/alquileres` + BottomNav.
+- [Unidad 9.11] Mejora AlquileresView: estados cambiados a Pagado/Señado/Pendiente. Nuevas columnas: Seña, Resto, Días. Badge clickeable con dropdown inline para cambiar estado + UPDATE en Supabase. Requiere columna `estado` en `alquileres`.
 
 ## Próximo a Hacer
-- Verificar que los inserts de Reservas funcionan con todas las columnas requeridas (`costo_recambio`, `cant_dias`, `anio_temporada`).
+- (ninguno por el momento)
 - Continuar con próximas unidades cuando sea indicado.
 
 ## Preguntas Abiertas
@@ -52,3 +54,5 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 - `handleQuickDate` ahora setea `fechaHasta` optimistamente antes de la consulta Supabase, para que el total se vea al instante.
 - Se agregó validación visible con mensajes descriptivos ("Faltan campos requeridos: cliente, fecha desde...").
 - Refactor completo del calendario: se eliminó `AvailabilityCalendar.jsx` y `MonthGrid.jsx`. Se crearon `YearGallery.jsx` (orquestador con año y filtro), `MiniMonthGrid.jsx` (grilla comprimida de un mes), y `SeasonFilter.jsx` (panel de píldoras para filtrar meses). Default: Dic–Abr (temporada verano Argentina). Selector de año con flechas. Reemplazado en `CalendarioView.jsx` e `InmuebleDetalleView.jsx`.
+- Se creó `AlquileresView.jsx` (ruta `/alquileres`, 5to item en BottomNav): tabla de gestión con filtros (año, inmueble, estado, búsqueda).
+- Estados cambiados a Pagado/Señado/Pendiente (computados desde total_senas_recibidas vs monto_total). Columnas: Seña, Total (con desglose `días × precio + recambio`), Resto, Días (con rango). Badge clickeable → dropdown inline para cambiar estado: Pagado/Pendiente accion directa, Señado abre input editable para ingresar/modificar monto de la seña.

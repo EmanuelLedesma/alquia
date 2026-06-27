@@ -7,6 +7,7 @@ import ClientesView from './views/ClientesView'
 import CalendarioView from './views/CalendarioView'
 import ReservasView from './views/ReservasView'
 import ReservaDetalleView from './views/ReservaDetalleView'
+import AlquileresView from './views/AlquileresView'
 import GastosView from './views/GastosView'
 import LoginView from './views/LoginView'
 
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/calendario" element={<CalendarioView />} />
             <Route path="/reservas" element={<ReservasView />} />
             <Route path="/reservas/:id" element={<ReservaDetalleView />} />
+            <Route path="/alquileres" element={<AlquileresView />} />
             <Route path="/gastos" element={<GastosView />} />
           </Route>
         </Route>
