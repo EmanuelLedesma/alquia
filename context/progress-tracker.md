@@ -9,13 +9,14 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 - Inicializar el proyecto con Vite, React, Tailwind y shadcn/ui.
 
 ## Completado
-- Nada aún.
+- [Unidad 1] Inicialización y App Shell (Layout Base) — Completado.
+- [Unidad 2] Vista de Inmuebles (UI Shell) — Completado.
 
 ## En Progreso
 - Nada aún.
 
 ## Próximo a Hacer
-- [Unidad 1] Configurar el layout principal (Bottom Navigation) y la vista inicial de los dúplex.
+- (ninguno por ahora)
 
 ## Preguntas Abiertas
 - Ninguna por el momento.
