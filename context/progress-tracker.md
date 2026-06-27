@@ -13,13 +13,16 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 - [Unidad 2] Vista de Inmuebles (UI Shell) — Completado.
 - [Unidad 3] Vista de Clientes y Prospectos (UI Shell) — Completado.
 - [Unidad 4] Formulario de Nueva Reserva (UI Shell) — Completado.
-- [Unidad 5] Panel de Gestión Contable (Reserva Individual) — En progreso.
+- [Unidad 5] Panel de Gestión Contable (Reserva Individual) — Completado.
+- [Unidad 6] Vista de Gastos y Cierre Anual — Completado.
+- [Unidad 7] Integración con Supabase y Autenticación Básica — Completado.
+- [Unidad 8] Migración de Vistas a Datos Reales (Supabase) — En progreso.
 
 ## En Progreso
-- [Unidad 5] Panel de Gestión Contable (Reserva Individual) — Detalle de reserva con resumen, historial de señas, nueva seña y saldo neto pendiente reactivo.
+- [Unidad 8] Migración de Vistas a Datos Reales (Supabase) — Inmuebles, Clientes, Reservas y Gastos conectados a Supabase con inserts y selects.
 
 ## Próximo a Hacer
-- Esperar revisión humana de la Unidad 5.
+- Esperar verificación humana del Login.
 - Continuar con la siguiente unidad de especificaciones cuando sea indicado.
 
 ## Preguntas Abiertas

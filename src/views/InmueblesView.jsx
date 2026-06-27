@@ -1,39 +1,47 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Copy } from 'lucide-react'
-
-const duplexes = [
-  {
-    id: 1,
-    nombre: 'Dúplex A',
-    descripcion: 'Dúplex en primera línea de costa con vista al mar, dos dormitorios y capacidad para 4 personas.',
-    disponibilidad: '¡Hola! Te confirmo que el Dúplex A está disponible para las fechas solicitadas. El precio es de $XXX por noche. Quedo atenta a tu consulta.',
-  },
-  {
-    id: 2,
-    nombre: 'Dúplex B',
-    descripcion: 'Amplio dúplex con patio privado, parrillero y cocina completa. Ideal para familias de hasta 5 personas.',
-    disponibilidad: '¡Hola! Te confirmo que el Dúplex B está disponible para las fechas solicitadas. El precio es de $XXX por noche. Quedo atenta a tu consulta.',
-  },
-]
+import { supabase } from '../services/supabase'
 
 export default function InmueblesView() {
+  const [inmuebles, setInmuebles] = useState([])
+  const [loading, setLoading] = useState(true)
   const [copiedId, setCopiedId] = useState(null)
+
+  useEffect(() => {
+    supabase.from('inmuebles').select('*').then(({ data, error }) => {
+      if (data) setInmuebles(data)
+      setLoading(false)
+    })
+  }, [])
 
   const handleCopy = async (text, id) => {
     try {
       await navigator.clipboard.writeText(text)
       setCopiedId(id)
       setTimeout(() => setCopiedId(null), 2000)
-    } catch {
-      // fallback silencioso si no hay permisos de clipboard
-    }
+    } catch {}
+  }
+
+  if (loading) {
+    return (
+      <div className="p-4">
+        <p className="text-text-muted">Cargando inmuebles…</p>
+      </div>
+    )
   }
 
   return (
     <div className="p-4 space-y-4">
-      {duplexes.map((d) => (
+      {inmuebles.length === 0 && (
+        <p className="text-center text-text-muted pt-8">No hay inmuebles registrados aún.</p>
+      )}
+      {inmuebles.map((d) => (
         <div key={d.id} className="bg-surface rounded-xl shadow-sm overflow-hidden">
-          <div className="aspect-video bg-slate-200" />
+          {d.fotos_urls?.[0] ? (
+            <img src={d.fotos_urls[0]} alt={d.nombre} className="aspect-video w-full object-cover" />
+          ) : (
+            <div className="aspect-video bg-slate-200" />
+          )}
           <div className="p-4 space-y-2">
             <h2 className="text-text-main text-lg font-semibold">{d.nombre}</h2>
             <p className="text-text-muted text-sm leading-relaxed">{d.descripcion}</p>

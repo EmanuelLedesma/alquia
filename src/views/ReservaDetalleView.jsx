@@ -1,38 +1,71 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { DollarSign, Plus, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-
-const mockReserva = {
-  id: '1',
-  cliente: 'Juan Pérez',
-  inmueble: 'Dúplex A',
-  fechaDesde: '2026-07-10',
-  fechaHasta: '2026-07-17',
-  montoTotal: 500000,
-  senas: [
-    { id: 1, fecha: '2026-06-20', monto: 50000 },
-    { id: 2, fecha: '2026-06-25', monto: 100000 },
-  ],
-}
+import { supabase } from '../services/supabase'
 
 export default function ReservaDetalleView() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [senas, setSenas] = useState(mockReserva.senas)
+  const [reserva, setReserva] = useState(null)
+  const [senas, setSenas] = useState([])
+  const [loading, setLoading] = useState(true)
   const [nuevoMonto, setNuevoMonto] = useState('')
 
-  const totalPagado = senas.reduce((acc, s) => acc + s.monto, 0)
-  const saldoPendiente = mockReserva.montoTotal - totalPagado
+  useEffect(() => {
+    Promise.all([
+      supabase
+        .from('alquileres')
+        .select('*, inmuebles(nombre), clientes(nombre, apellido)')
+        .eq('id', id)
+        .single(),
+      supabase.from('senas').select('*').eq('alquiler_id', id).order('fecha'),
+    ]).then(([alquilerRes, senasRes]) => {
+      if (alquilerRes.data) setReserva(alquilerRes.data)
+      if (senasRes.data) setSenas(senasRes.data)
+      setLoading(false)
+    })
+  }, [id])
 
-  const handleAgregarSena = () => {
+  const totalPagado = senas.reduce((acc, s) => acc + s.monto, 0)
+  const saldoPendiente = reserva ? reserva.monto_total - totalPagado : 0
+
+  const handleAgregarSena = async () => {
     const monto = Number(nuevoMonto)
     if (!monto || monto <= 0) return
+
+    const { error: insertError } = await supabase.from('senas').insert({
+      alquiler_id: Number(id),
+      fecha: new Date().toISOString().slice(0, 10),
+      monto,
+    })
+
+    if (insertError) return
+
+    const nuevoTotal = totalPagado + monto
+    await supabase.from('alquileres').update({ total_senas_recibidas: nuevoTotal }).eq('id', id)
+
     setSenas((prev) => [
       ...prev,
       { id: Date.now(), fecha: new Date().toISOString().slice(0, 10), monto },
     ])
     setNuevoMonto('')
+  }
+
+  if (loading) {
+    return (
+      <div className="p-4">
+        <p className="text-text-muted">Cargando reserva…</p>
+      </div>
+    )
+  }
+
+  if (!reserva) {
+    return (
+      <div className="p-4">
+        <p className="text-text-muted">Reserva no encontrada.</p>
+      </div>
+    )
   }
 
   return (
@@ -47,25 +80,29 @@ export default function ReservaDetalleView() {
 
       <h1 className="text-text-main text-xl font-bold">Reserva #{id}</h1>
 
-      {/* Resumen */}
       <div className="bg-surface rounded-xl shadow-sm p-4 space-y-2">
         <h2 className="text-text-main font-semibold">Resumen</h2>
         <div className="text-sm text-text-muted space-y-1">
-          <p><span className="text-text-main">Cliente:</span> {mockReserva.cliente}</p>
-          <p><span className="text-text-main">Inmueble:</span> {mockReserva.inmueble}</p>
+          <p>
+            <span className="text-text-main">Cliente:</span>{' '}
+            {reserva.clientes?.nombre} {reserva.clientes?.apellido}
+          </p>
+          <p>
+            <span className="text-text-main">Inmueble:</span>{' '}
+            {reserva.inmuebles?.nombre}
+          </p>
           <p>
             <span className="text-text-main">Fechas:</span>{' '}
-            {new Date(mockReserva.fechaDesde).toLocaleDateString('es-AR')} al{' '}
-            {new Date(mockReserva.fechaHasta).toLocaleDateString('es-AR')}
+            {new Date(reserva.fecha_desde).toLocaleDateString('es-AR')} al{' '}
+            {new Date(reserva.fecha_hasta).toLocaleDateString('es-AR')}
           </p>
           <p className="flex items-center gap-1 text-base font-bold text-primary pt-1">
             <DollarSign className="w-4 h-4" />
-            Monto Total: ${mockReserva.montoTotal.toLocaleString('es-AR')}
+            Monto Total: ${reserva.monto_total.toLocaleString('es-AR')}
           </p>
         </div>
       </div>
 
-      {/* Saldo Neto Pendiente */}
       <div
         className={`rounded-xl p-4 text-center ${
           saldoPendiente === 0
@@ -78,7 +115,6 @@ export default function ReservaDetalleView() {
         {saldoPendiente === 0 && <p className="text-sm">Completamente saldado</p>}
       </div>
 
-      {/* Historial de Pagos */}
       <div className="bg-surface rounded-xl shadow-sm p-4 space-y-3">
         <h2 className="text-text-main font-semibold">Historial de Pagos</h2>
         {senas.length === 0 ? (
@@ -106,7 +142,6 @@ export default function ReservaDetalleView() {
         </div>
       </div>
 
-      {/* Nueva Seña */}
       <div className="bg-surface rounded-xl shadow-sm p-4 space-y-3">
         <h2 className="text-text-main font-semibold">Nueva Seña</h2>
         <div className="flex gap-2">

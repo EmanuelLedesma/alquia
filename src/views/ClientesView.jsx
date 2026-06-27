@@ -1,48 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Users, PawPrint } from 'lucide-react'
-
-const clientes = [
-  {
-    id: 1,
-    nombre: 'María',
-    apellido: 'González',
-    dni: '30.123.456',
-    estado: 'activo',
-    adultos: 2,
-    chicos: 1,
-    mascotas: true,
-  },
-  {
-    id: 2,
-    nombre: 'Carlos',
-    apellido: 'López',
-    dni: '28.987.654',
-    estado: 'activo',
-    adultos: 2,
-    chicos: 0,
-    mascotas: false,
-  },
-  {
-    id: 3,
-    nombre: 'Ana',
-    apellido: 'Martínez',
-    dni: '32.456.789',
-    estado: 'prospecto',
-    adultos: 1,
-    chicos: 2,
-    mascotas: true,
-  },
-  {
-    id: 4,
-    nombre: 'Pedro',
-    apellido: 'Ramírez',
-    dni: '34.567.890',
-    estado: 'prospecto',
-    adultos: 2,
-    chicos: 3,
-    mascotas: false,
-  },
-]
+import { supabase } from '../services/supabase'
 
 const tabs = [
   { key: 'activo', label: 'Activos' },
@@ -50,9 +8,26 @@ const tabs = [
 ]
 
 export default function ClientesView() {
+  const [clientes, setClientes] = useState([])
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('activo')
 
+  useEffect(() => {
+    supabase.from('clientes').select('*').then(({ data, error }) => {
+      if (data) setClientes(data)
+      setLoading(false)
+    })
+  }, [])
+
   const filtered = clientes.filter((c) => c.estado === activeTab)
+
+  if (loading) {
+    return (
+      <div className="p-4">
+        <p className="text-text-muted">Cargando clientes…</p>
+      </div>
+    )
+  }
 
   return (
     <div className="p-4 space-y-4">
@@ -77,6 +52,11 @@ export default function ClientesView() {
       </div>
 
       <div className="space-y-3">
+        {filtered.length === 0 && (
+          <p className="text-center text-text-muted pt-8">
+            No hay {activeTab === 'activo' ? 'clientes activos' : 'prospectos'} aún.
+          </p>
+        )}
         {filtered.map((c) => (
           <div key={c.id} className="bg-surface rounded-xl shadow-sm p-4 space-y-3">
             <div className="flex items-start justify-between">
@@ -106,12 +86,6 @@ export default function ClientesView() {
             </div>
           </div>
         ))}
-
-        {filtered.length === 0 && (
-          <p className="text-center text-text-muted pt-8">
-            No hay {activeTab === 'activo' ? 'clientes activos' : 'prospectos'} aún.
-          </p>
-        )}
       </div>
     </div>
   )
