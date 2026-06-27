@@ -11,12 +11,14 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 ## Completado
 - [Unidad 1] Inicialización y App Shell (Layout Base) — Completado.
 - [Unidad 2] Vista de Inmuebles (UI Shell) — Completado.
+- [Unidad 3] Vista de Clientes y Prospectos (UI Shell) — En progreso.
 
 ## En Progreso
-- Nada aún.
+- [Unidad 3] Vista de Clientes y Prospectos (UI Shell) — Implementando componentes de Tabs y tarjetas con mock data.
 
 ## Próximo a Hacer
-- (ninguno por ahora)
+- Esperar revisión humana de la Unidad 3.
+- Continuar con la siguiente unidad de especificaciones cuando sea indicado.
 
 ## Preguntas Abiertas
 - Ninguna por el momento.
