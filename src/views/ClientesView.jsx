@@ -9,6 +9,8 @@ const tabs = [
   { key: 'archivado', label: 'Archivados' },
 ]
 
+const currentYear = new Date().getFullYear()
+
 const initialForm = {
   nombre: '',
   apellido: '',
@@ -21,6 +23,7 @@ const initialForm = {
   observaciones: '',
   lleva_mascotas: false,
   estado: 'prospecto',
+  anio_alquiler: currentYear,
 }
 
 export default function ClientesView() {
@@ -77,6 +80,7 @@ export default function ClientesView() {
       observaciones: form.observaciones,
       lleva_mascotas: form.lleva_mascotas,
       estado: form.estado,
+      anio_alquiler: form.anio_alquiler,
     }
 
     if (editingCliente) {
@@ -120,9 +124,13 @@ export default function ClientesView() {
   const handleArchive = async (cliente) => {
     setErrorMsg('')
     const nuevoEstado = cliente.estado === 'archivado' ? 'activo' : 'archivado'
+    const updateData = { estado: nuevoEstado }
+    if (nuevoEstado === 'activo') {
+      updateData.anio_alquiler = new Date().getFullYear()
+    }
     const { error } = await supabase
       .from('clientes')
-      .update({ estado: nuevoEstado })
+      .update(updateData)
       .eq('id', cliente.id)
 
     if (error) {
@@ -131,16 +139,17 @@ export default function ClientesView() {
     }
 
     setClientes((prev) =>
-      prev.map((c) => (c.id === cliente.id ? { ...c, estado: nuevoEstado } : c))
+      prev.map((c) => (c.id === cliente.id ? { ...c, ...updateData } : c))
     )
     setMenuOpenId(null)
   }
 
   const handleActivar = async (cliente) => {
     setErrorMsg('')
+    const updateData = { estado: 'activo', anio_alquiler: new Date().getFullYear() }
     const { error } = await supabase
       .from('clientes')
-      .update({ estado: 'activo' })
+      .update(updateData)
       .eq('id', cliente.id)
 
     if (error) {
@@ -149,7 +158,7 @@ export default function ClientesView() {
     }
 
     setClientes((prev) =>
-      prev.map((c) => (c.id === cliente.id ? { ...c, estado: 'activo' } : c))
+      prev.map((c) => (c.id === cliente.id ? { ...c, ...updateData } : c))
     )
     setMenuOpenId(null)
   }
@@ -168,6 +177,7 @@ export default function ClientesView() {
       observaciones: cliente.observaciones || '',
       lleva_mascotas: cliente.lleva_mascotas || false,
       estado: cliente.estado || 'prospecto',
+      anio_alquiler: cliente.anio_alquiler ?? new Date().getFullYear(),
     })
     setModalOpen(true)
     setErrorMsg('')
@@ -254,6 +264,11 @@ export default function ClientesView() {
               <div>
                 <p className="text-text-main font-semibold">
                   {c.nombre} {c.apellido}
+                  {c.anio_alquiler && (
+                    <span className="text-text-muted font-normal text-sm ml-2">
+                      · Año {c.anio_alquiler}
+                    </span>
+                  )}
                 </p>
                 <p className="text-text-muted text-sm">DNI {c.dni}</p>
                 {c.email && <p className="text-text-muted text-xs">{c.email}</p>}
@@ -463,6 +478,18 @@ export default function ClientesView() {
                     <option value="prospecto">Prospecto</option>
                     <option value="activo">Activo</option>
                   </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm text-text-muted font-medium">Año de alquiler</label>
+                  <input
+                    type="number"
+                    value={form.anio_alquiler}
+                    onChange={(e) => handleChange('anio_alquiler', Number(e.target.value))}
+                    min={2020}
+                    max={2035}
+                    className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
+                  />
                 </div>
 
                 <label className="flex items-center gap-3 cursor-pointer">

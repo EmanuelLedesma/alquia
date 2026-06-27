@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Image as ImageIcon, X } from 'lucide-react'
+import { ArrowLeft, Image as ImageIcon, X, Copy, Trash2, Plus } from 'lucide-react'
 import { supabase } from '../services/supabase'
+import AvailabilityCalendar from '../components/calendar/AvailabilityCalendar'
 
 export default function InmuebleDetalleView() {
   const { id } = useParams()
@@ -13,6 +14,21 @@ export default function InmuebleDetalleView() {
   const [preview, setPreview] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const fileInputRef = useRef(null)
+
+  const [templates, setTemplates] = useState(() => {
+    const saved = localStorage.getItem(`templates-${id}`)
+    return saved ? JSON.parse(saved) : []
+  })
+  const [templateModalOpen, setTemplateModalOpen] = useState(false)
+  const [templateForm, setTemplateForm] = useState({ title: '', content: '' })
+  const [templateSubmitting, setTemplateSubmitting] = useState(false)
+  const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    if (id) {
+      localStorage.setItem(`templates-${id}`, JSON.stringify(templates))
+    }
+  }, [templates, id])
 
   useEffect(() => {
     supabase
@@ -69,6 +85,33 @@ export default function InmuebleDetalleView() {
     }
 
     setUploading(false)
+  }
+
+  const showToast = (msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 2000)
+  }
+
+  const handleAddTemplate = async (e) => {
+    e.preventDefault()
+    setTemplateSubmitting(true)
+    const newTemplate = {
+      id: Date.now(),
+      title: templateForm.title,
+      content: templateForm.content,
+    }
+    setTemplates((prev) => [newTemplate, ...prev])
+    setTemplateForm({ title: '', content: '' })
+    setTemplateModalOpen(false)
+    setTemplateSubmitting(false)
+  }
+
+  const handleCopyTemplate = (content) => {
+    navigator.clipboard.writeText(content).then(() => showToast('¡Copiado!'))
+  }
+
+  const handleDeleteTemplate = (id) => {
+    setTemplates((prev) => prev.filter((t) => t.id !== id))
   }
 
   if (loading) {
@@ -169,6 +212,108 @@ export default function InmuebleDetalleView() {
           </div>
         )}
       </div>
+
+      <AvailabilityCalendar inmuebleId={Number(id)} compact />
+
+      {/* Textos Pre-armados */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-text-main font-semibold">Textos Pre-armados</h2>
+          <button
+            onClick={() => { setTemplateModalOpen(true); setTemplateForm({ title: '', content: '' }) }}
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-primary text-white text-xs font-medium"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Nuevo Texto
+          </button>
+        </div>
+
+        {templates.length === 0 && (
+          <p className="text-text-muted text-sm">No hay textos guardados para este inmueble.</p>
+        )}
+
+        <div className="space-y-2">
+          {templates.map((t) => (
+            <div key={t.id} className="bg-surface rounded-xl shadow-sm p-4 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-text-main font-semibold text-sm">{t.title}</p>
+                <button
+                  onClick={() => handleDeleteTemplate(t.id)}
+                  className="text-red-400 hover:text-red-600 p-0.5 -m-0.5 shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-text-muted text-sm whitespace-pre-line">{t.content}</p>
+              <button
+                onClick={() => handleCopyTemplate(t.content)}
+                className="inline-flex items-center gap-1.5 text-primary text-xs font-medium"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                Copiar
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[9999] bg-gray-900 text-white px-4 py-2 rounded-lg text-sm shadow-lg">
+          {toast}
+        </div>
+      )}
+
+      {/* Modal nuevo texto */}
+      {templateModalOpen && (
+        <div className="fixed inset-0 z-[9999] bg-gray-900/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+              <h2 className="text-text-main font-semibold text-lg">Nuevo Texto</h2>
+              <button
+                onClick={() => setTemplateModalOpen(false)}
+                className="text-text-muted"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4 space-y-4">
+              <form id="template-form" onSubmit={handleAddTemplate} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm text-text-muted font-medium">Título</label>
+                  <input
+                    type="text"
+                    value={templateForm.title}
+                    onChange={(e) => setTemplateForm((prev) => ({ ...prev, title: e.target.value }))}
+                    required
+                    className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm text-text-muted font-medium">Contenido</label>
+                  <textarea
+                    value={templateForm.content}
+                    onChange={(e) => setTemplateForm((prev) => ({ ...prev, content: e.target.value }))}
+                    rows={4}
+                    required
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-surface text-text-main text-sm resize-none"
+                  />
+                </div>
+              </form>
+            </div>
+            <div className="p-4 border-t border-slate-200 space-y-2">
+              <button
+                type="submit"
+                form="template-form"
+                disabled={templateSubmitting}
+                className="w-full h-11 rounded-xl bg-primary text-white text-sm font-medium disabled:opacity-50"
+              >
+                {templateSubmitting ? 'Guardando…' : 'Guardar Texto'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
