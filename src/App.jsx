@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import InmueblesView from './views/InmueblesView'
+import InmuebleDetalleView from './views/InmuebleDetalleView'
 import ClientesView from './views/ClientesView'
 import ReservasView from './views/ReservasView'
 import ReservaDetalleView from './views/ReservaDetalleView'
@@ -16,6 +17,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/" element={<InmueblesView />} />
+            <Route path="/inmuebles/:id" element={<InmuebleDetalleView />} />
             <Route path="/clientes" element={<ClientesView />} />
             <Route path="/reservas" element={<ReservasView />} />
             <Route path="/reservas/:id" element={<ReservaDetalleView />} />
