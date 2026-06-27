@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Image as ImageIcon, X, Copy, Trash2, Plus } from 'lucide-react'
 import { supabase } from '../services/supabase'
-import AvailabilityCalendar from '../components/calendar/AvailabilityCalendar'
+import YearGallery from '../components/calendar/YearGallery'
 
 export default function InmuebleDetalleView() {
   const { id } = useParams()
@@ -213,7 +213,7 @@ export default function InmuebleDetalleView() {
         )}
       </div>
 
-      <AvailabilityCalendar inmuebleId={Number(id)} compact />
+      <YearGallery inmuebleId={Number(id)} compact />
 
       {/* Textos Pre-armados */}
       <div className="space-y-3">

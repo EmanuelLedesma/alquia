@@ -28,6 +28,7 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 - [Unidad 9.6] Fix de inputs numéricos (`type="text" inputMode="numeric"` para permitir borrar y escribir).
 - [Unidad 9.7] Fix de validación visible en formulario (mensaje "Faltan campos requeridos").
 - [Unidad 9.8] Fix de cálculo de total (base + recambio) con reactividad correcta.
+- [Unidad 9.9] Refactor de calendario a galería por temporada — reemplazo de AvailabilityCalendar por YearGallery con MiniMonthGrid y SeasonFilter.
 
 ## Próximo a Hacer
 - Verificar que los inserts de Reservas funcionan con todas las columnas requeridas (`costo_recambio`, `cant_dias`, `anio_temporada`).
@@ -50,3 +51,4 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 - Se cambiaron inputs `type="number"` a `type="text" inputMode="numeric"` con filtro `replace(/\D/g, '')`.
 - `handleQuickDate` ahora setea `fechaHasta` optimistamente antes de la consulta Supabase, para que el total se vea al instante.
 - Se agregó validación visible con mensajes descriptivos ("Faltan campos requeridos: cliente, fecha desde...").
+- Refactor completo del calendario: se eliminó `AvailabilityCalendar.jsx` y `MonthGrid.jsx`. Se crearon `YearGallery.jsx` (orquestador con año y filtro), `MiniMonthGrid.jsx` (grilla comprimida de un mes), y `SeasonFilter.jsx` (panel de píldoras para filtrar meses). Default: Dic–Abr (temporada verano Argentina). Selector de año con flechas. Reemplazado en `CalendarioView.jsx` e `InmuebleDetalleView.jsx`.
