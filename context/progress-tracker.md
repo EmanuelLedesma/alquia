@@ -42,6 +42,10 @@ Actualiza este archivo después de cada cambio significativo de implementación.
     - Ingreso → insert en `senas` + update `total_senas_recibidas` en `alquileres`.
   - Sin nuevas tablas ni migraciones. Reusa `gastos` y `senas`.
 
+## Completado Recientemente
+- [V0.1 Stabilization] Fix de imágenes en tarjetas y detalle: reemplazo de altura fija (`h-48`, `h-64`) por `aspect-[4/3]` para proporción consistente, más `bg-slate-100` de fondo neutral.
+- [Planning] Se creó `context/v0.2-ideas.md` con 8 ejes de mejora para la próxima versión.
+
 ## Próximo a Hacer
 - Bucket `fotos-inmuebles` debe ser público con RLS policies en Supabase Storage.
 - Columnas `email`, `celular`, `direccion`, `observaciones` faltantes en `clientes`.

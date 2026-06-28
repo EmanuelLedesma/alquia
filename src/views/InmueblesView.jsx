@@ -129,9 +129,9 @@ export default function InmueblesView() {
             className="bg-surface rounded-xl shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-200 block"
           >
             {d.fotos_urls?.[0] ? (
-              <img src={d.fotos_urls[0]} alt={d.nombre} className="h-48 w-full object-cover" />
+              <img src={d.fotos_urls[0]} alt={d.nombre} className="aspect-[4/3] w-full object-cover bg-slate-100" />
             ) : (
-              <div className="h-48 bg-slate-300" />
+              <div className="aspect-[4/3] w-full bg-slate-200" />
             )}
             <div className="p-4 space-y-1.5">
               <h2 className="text-text-main font-semibold">{d.nombre}</h2>

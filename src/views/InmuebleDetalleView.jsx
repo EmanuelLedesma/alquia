@@ -154,10 +154,10 @@ export default function InmuebleDetalleView() {
           <img
             src={currentPhoto}
             alt={inmueble.nombre}
-            className="w-full h-64 object-cover rounded-xl"
+            className="aspect-[4/3] w-full object-cover rounded-xl bg-slate-100"
           />
         ) : (
-          <div className="w-full h-64 bg-slate-300 rounded-xl flex items-center justify-center">
+          <div className="aspect-[4/3] w-full bg-slate-200 rounded-xl flex items-center justify-center">
             <ImageIcon className="w-12 h-12 text-slate-400" />
           </div>
         )}
