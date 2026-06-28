@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { CalendarDays, DollarSign, AlertTriangle } from 'lucide-react'
 import { supabase } from '../services/supabase'
-import { diasEntre } from '../lib/utils'
+import { diasEntre, isoToDisplay, displayToIso, formatDateInput } from '../lib/utils'
 
 function addDays(dateStr, days) {
   var parts = dateStr.split('-')
@@ -188,18 +188,24 @@ export default function ReservasView() {
             <div className="space-y-1.5">
               <label className="text-sm text-text-muted font-medium">Fecha Desde</label>
               <input
-                type="date"
-                value={fechaDesde}
-                onChange={function (e) { setFechaDesde(e.target.value); setOverlapError(null) }}
+                type="text"
+                inputMode="numeric"
+                value={isoToDisplay(fechaDesde)}
+                onChange={function (e) { setFechaDesde(displayToIso(formatDateInput(e.target.value))); setOverlapError(null) }}
+                placeholder="dd/mm/aa"
+                maxLength={8}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm text-text-muted font-medium">Fecha Hasta</label>
               <input
-                type="date"
-                value={fechaHasta}
-                onChange={function (e) { setFechaHasta(e.target.value); setOverlapError(null) }}
+                type="text"
+                inputMode="numeric"
+                value={isoToDisplay(fechaHasta)}
+                onChange={function (e) { setFechaHasta(displayToIso(formatDateInput(e.target.value))); setOverlapError(null) }}
+                placeholder="dd/mm/aa"
+                maxLength={8}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
               />
             </div>

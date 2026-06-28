@@ -32,6 +32,16 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 - [Unidad 9.10] Vista AlquileresView (Gestión de Alquileres) — tabla con filtros (año, inmueble, estado, búsqueda), badges de estado, formato moneda, sin acciones. Ruta `/alquileres` + BottomNav.
 - [Unidad 9.11] Mejora AlquileresView: estados cambiados a Pagado/Señado/Pendiente. Nuevas columnas: Seña, Resto, Días. Badge clickeable con dropdown inline para cambiar estado + UPDATE en Supabase. Requiere columna `estado` en `alquileres`.
 
+## Completado Recientemente
+- [Unidad 10.1] Dashboard Financiero — Refactor completo de `GastosView.jsx`:
+  - KPIs: Ingresos (verde), Gastos (rojo), Balance (color dinámico), filtrados por período.
+  - Filtros: Todo el tiempo / Por año / Por mes con selectores condicionales.
+  - Tabla de transacciones unificada: combina `senas` (ingresos) y `gastos` (egresos), ordenada por fecha descendente.
+  - Modal "+ Nuevo Movimiento" con `createPortal`: Tipo (Gasto/Ingreso) cambia campos dinámicamente.
+    - Gasto → insert en `gastos` (inmueble, concepto, monto, fecha).
+    - Ingreso → insert en `senas` + update `total_senas_recibidas` en `alquileres`.
+  - Sin nuevas tablas ni migraciones. Reusa `gastos` y `senas`.
+
 ## Próximo a Hacer
 - Bucket `fotos-inmuebles` debe ser público con RLS policies en Supabase Storage.
 - Columnas `email`, `celular`, `direccion`, `observaciones` faltantes en `clientes`.

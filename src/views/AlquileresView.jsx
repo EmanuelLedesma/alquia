@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, ChevronDown, Check } from 'lucide-react'
+import { Plus, Search, ChevronDown, Pencil } from 'lucide-react'
 import { supabase } from '../services/supabase'
 import { diasEntre } from '../lib/utils'
 
@@ -44,12 +45,20 @@ export default function AlquileresView() {
   var [dropdownPos, setDropdownPos] = useState(null)
   var [senadoInputVal, setSenadoInputVal] = useState({})
   var [showSenadoInput, setShowSenadoInput] = useState(false)
+  var [dropdownError, setDropdownError] = useState('')
   var dropdownRef = useRef(null)
 
   var [search, setSearch] = useState('')
   var [yearFilter, setYearFilter] = useState('2026')
   var [inmuebleFilter, setInmuebleFilter] = useState('')
   var [statusFilter, setStatusFilter] = useState('')
+
+  function cerrarDropdown() {
+    setOpenDropdownId(null)
+    setDropdownPos(null)
+    setShowSenadoInput(false)
+    setDropdownError('')
+  }
 
   useEffect(function () {
     supabase.from('inmuebles').select('id, nombre').then(function (res) {
@@ -80,66 +89,147 @@ export default function AlquileresView() {
     if (!openDropdownId) return
     function handleClick(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target) && !e.target.closest('[data-badge]')) {
-        setOpenDropdownId(null)
-        setDropdownPos(null)
-        setShowSenadoInput(false)
+        cerrarDropdown()
       }
     }
+    function handleScroll() { cerrarDropdown() }
     document.addEventListener('mousedown', handleClick)
-    return function () { document.removeEventListener('mousedown', handleClick) }
+    window.addEventListener('scroll', handleScroll, { capture: true })
+    return function () {
+      document.removeEventListener('mousedown', handleClick)
+      window.removeEventListener('scroll', handleScroll, { capture: true })
+    }
   }, [openDropdownId])
 
-  function handleQuickStatus(a, newStatus) {
-    if (newStatus === 'pagado') {
-      supabase.from('alquileres').update({ total_senas_recibidas: a.monto_total }).eq('id', a.id).then(function (res) {
+  function handlePagado(a) {
+    var current = Number(a.total_senas_recibidas) || 0
+    var total = Number(a.monto_total) || 0
+    var remaining = total - current
+
+    if (remaining <= 0) {
+      setDropdownError('El alquiler ya está completamente pagado')
+      return
+    }
+
+    var today = new Date().toISOString().split('T')[0]
+
+    supabase.from('senas').insert({
+      alquiler_id: a.id,
+      monto: remaining,
+      fecha: today,
+    }).then(function (senasRes) {
+      if (!senasRes.error) {
+        supabase.from('alquileres').update({ total_senas_recibidas: total }).eq('id', a.id).then(function (res) {
+          if (!res.error) {
+            setAlquileres(function (prev) {
+              return prev.map(function (x) { return x.id === a.id ? { ...x, total_senas_recibidas: total } : x })
+            })
+          }
+        })
+      }
+      cerrarDropdown()
+    })
+  }
+
+  function handleAgregarSena(a) {
+    var monto = Number(senadoInputVal[a.id])
+    var total = Number(a.monto_total) || 0
+    var current = Number(a.total_senas_recibidas) || 0
+
+    if (isNaN(monto) || monto <= 0) {
+      setDropdownError('Ingresá un monto válido')
+      return
+    }
+
+    if (current + monto > total) {
+      setDropdownError('La suma de señas no puede superar los ' + formatCurrency(total))
+      return
+    }
+
+    var today = new Date().toISOString().split('T')[0]
+
+    var nuevoTotal = current + monto
+    var esPagado = nuevoTotal >= total
+
+    supabase.from('senas').insert({
+      alquiler_id: a.id,
+      monto: monto,
+      fecha: today,
+    }).then(function (senasRes) {
+      if (!senasRes.error) {
+        var finalTotal = esPagado ? total : nuevoTotal
+        supabase.from('alquileres').update({ total_senas_recibidas: finalTotal }).eq('id', a.id).then(function (res) {
+          if (!res.error) {
+            setAlquileres(function (prev) {
+              return prev.map(function (x) { return x.id === a.id ? { ...x, total_senas_recibidas: finalTotal } : x })
+            })
+          }
+        })
+      }
+      cerrarDropdown()
+    })
+  }
+
+  function handleEditarTotal(a) {
+    var monto = Number(senadoInputVal[a.id])
+    var total = Number(a.monto_total) || 0
+
+    if (isNaN(monto) || monto < 0) {
+      setDropdownError('Ingresá un monto válido')
+      return
+    }
+
+    if (monto > total) {
+      setDropdownError('El total de señas no puede superar ' + formatCurrency(total))
+      return
+    }
+
+    var finalTotal = monto >= total ? total : monto
+
+    supabase.from('senas').delete().eq('alquiler_id', a.id).then(function () {
+      if (finalTotal > 0) {
+        var today = new Date().toISOString().split('T')[0]
+        return supabase.from('senas').insert({
+          alquiler_id: a.id,
+          monto: finalTotal,
+          fecha: today,
+        })
+      }
+    }).then(function () {
+      supabase.from('alquileres').update({ total_senas_recibidas: finalTotal }).eq('id', a.id).then(function (res) {
         if (!res.error) {
           setAlquileres(function (prev) {
-            return prev.map(function (x) { return x.id === a.id ? { ...x, total_senas_recibidas: a.monto_total } : x })
+            return prev.map(function (x) { return x.id === a.id ? { ...x, total_senas_recibidas: finalTotal } : x })
           })
         }
+        cerrarDropdown()
       })
-      setOpenDropdownId(null)
-      setDropdownPos(null)
-      setShowSenadoInput(false)
-    } else if (newStatus === 'pendiente') {
+    })
+  }
+
+  function handlePendiente(a) {
+    supabase.from('senas').delete().eq('alquiler_id', a.id).then(function () {
       supabase.from('alquileres').update({ total_senas_recibidas: 0 }).eq('id', a.id).then(function (res) {
         if (!res.error) {
           setAlquileres(function (prev) {
             return prev.map(function (x) { return x.id === a.id ? { ...x, total_senas_recibidas: 0 } : x })
           })
         }
+        cerrarDropdown()
       })
-      setOpenDropdownId(null)
-      setDropdownPos(null)
-      setShowSenadoInput(false)
-    }
-  }
-
-  function handleConfirmSenado(a) {
-    var val = Number(senadoInputVal[a.id])
-    if (isNaN(val) || val <= 0) return
-    supabase.from('alquileres').update({ total_senas_recibidas: val }).eq('id', a.id).then(function (res) {
-      if (!res.error) {
-        setAlquileres(function (prev) {
-          return prev.map(function (x) { return x.id === a.id ? { ...x, total_senas_recibidas: val } : x })
-        })
-      }
     })
-    setOpenDropdownId(null)
-    setDropdownPos(null)
-    setShowSenadoInput(false)
   }
 
   function handleBadgeClick(e, a) {
-    var rect = e.currentTarget.getBoundingClientRect()
     if (openDropdownId === a.id) {
-      setOpenDropdownId(null)
-      setDropdownPos(null)
+      cerrarDropdown()
     } else {
-      setDropdownPos({ top: rect.top, left: rect.left + rect.width / 2 })
+      var rect = e.currentTarget.getBoundingClientRect()
+      setDropdownPos({ top: rect.top, left: rect.left + rect.width / 2, width: rect.width })
       setOpenDropdownId(a.id)
       setSenadoInputVal(function (prev) { return { ...prev, [a.id]: '' } })
       setShowSenadoInput(false)
+      setDropdownError('')
     }
   }
 
@@ -289,7 +379,7 @@ export default function AlquileresView() {
         </table>
       </div>
 
-      {openDropdownId && dropdownPos && (function () {
+      {openDropdownId && dropdownPos && createPortal((function () {
         var a = alquileres.find(function (x) { return x.id === openDropdownId })
         if (!a) return null
         var senas = Number(a.total_senas_recibidas) || 0
@@ -297,8 +387,27 @@ export default function AlquileresView() {
         var status = getStatus(senas, total)
         return (
           <div
-            ref={dropdownRef}
-            className="fixed z-[9999] bg-surface border border-slate-200 rounded-xl shadow-lg p-1 min-w-[160px]"
+            ref={function (el) {
+              dropdownRef.current = el
+              if (el && !el.dataset.clamped) {
+                el.dataset.clamped = 'true'
+                var r = el.getBoundingClientRect()
+                if (r.right > window.innerWidth) {
+                  el.style.left = (window.innerWidth - r.width - 12) + 'px'
+                  el.style.transform = 'none'
+                } else if (r.left < 12) {
+                  el.style.left = '12px'
+                  el.style.transform = 'none'
+                }
+                if (r.bottom > window.innerHeight) {
+                  el.style.top = (window.innerHeight - r.height - 8) + 'px'
+                }
+                if (r.top < 0) {
+                  el.style.top = '8px'
+                }
+              }
+            }}
+            className="fixed z-[9999] bg-surface border border-slate-200 rounded-xl shadow-lg p-1 min-w-[180px]"
             style={{
               top: dropdownPos.top + 'px',
               left: dropdownPos.left + 'px',
@@ -306,7 +415,7 @@ export default function AlquileresView() {
             }}
           >
             <button
-              onClick={function () { handleQuickStatus(a, 'pagado') }}
+              onClick={function () { handlePagado(a) }}
               className={'w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-slate-100 ' + (status === 'pagado' ? 'bg-green-100 text-green-700 font-semibold' : 'text-text-main')}
             >
               Pagado
@@ -314,12 +423,12 @@ export default function AlquileresView() {
 
             <div className="px-1 py-0.5">
               <button
-                onClick={function () { setShowSenadoInput(!showSenadoInput) }}
+                onClick={function () { setShowSenadoInput(!showSenadoInput); setDropdownError('') }}
                 className={'w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-slate-100 ' + (status === 'senado' ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-text-main')}
               >
                 Señado
               </button>
-              {showSenadoInput && <div className="px-1 pt-1 pb-1.5 space-y-1">
+              {showSenadoInput && <div className="px-1 pt-1 pb-1.5 space-y-1.5">
                 <input
                   type="text"
                   inputMode="numeric"
@@ -327,29 +436,41 @@ export default function AlquileresView() {
                   onChange={function (e) {
                     var v = e.target.value.replace(/\D/g, '')
                     setSenadoInputVal(function (prev) { return { ...prev, [a.id]: v } })
+                    setDropdownError('')
                   }}
-                  placeholder="Monto de la seña"
+                  placeholder="Monto"
                   className="w-full h-8 px-2 rounded-lg border border-slate-200 bg-surface text-text-main text-xs text-right"
                 />
-                <button
-                  onClick={function () { handleConfirmSenado(a) }}
-                  className="w-full h-7 rounded-lg bg-primary text-white text-xs font-medium flex items-center justify-center gap-1"
-                >
-                  <Check className="w-3 h-3" />
-                  Confirmar
-                </button>
+                {dropdownError && (
+                  <p className="text-[10px] text-red-500 leading-tight px-0.5">{dropdownError}</p>
+                )}
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={function () { handleAgregarSena(a) }}
+                    className="flex-1 h-7 rounded-lg bg-primary text-white text-xs font-medium flex items-center justify-center"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={function () { handleEditarTotal(a) }}
+                    className="h-7 w-7 rounded-lg border border-slate-200 text-text-muted flex items-center justify-center hover:bg-slate-50 transition-colors"
+                    title="Editar total de señas"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>}
             </div>
 
             <button
-              onClick={function () { handleQuickStatus(a, 'pendiente') }}
+              onClick={function () { handlePendiente(a) }}
               className={'w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-slate-100 ' + (status === 'pendiente' ? 'bg-gray-100 text-gray-600 font-semibold' : 'text-text-main')}
             >
               Pendiente
             </button>
           </div>
         )
-      })()}
+      })(), document.body)}
     </div>
   )
 }
