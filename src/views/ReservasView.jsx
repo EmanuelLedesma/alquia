@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { CalendarDays, DollarSign, AlertTriangle } from 'lucide-react'
 import { supabase } from '../services/supabase'
-import { diasEntre } from '../lib/utils'
+import { diasEntre, isoToDisplay } from '../lib/utils'
 
 function addDays(dateStr, days) {
   var parts = dateStr.split('-')
@@ -16,6 +16,72 @@ function addDays(dateStr, days) {
 
 function fmtDate(d) {
   return new Date(d).toLocaleDateString('es-AR')
+}
+
+function DateInput({ value, onChange, label }) {
+  var ref = useRef(null)
+  var [display, setDisplay] = useState('')
+
+  useEffect(function () {
+    if (value) {
+      setDisplay(isoToDisplay(value))
+    }
+  }, [value])
+
+  function handleTextChange(e) {
+    var raw = e.target.value.replace(/\D/g, '').slice(0, 6)
+    var formatted = ''
+    for (var i = 0; i < raw.length; i++) {
+      if (i === 2 || i === 4) formatted += '/'
+      formatted += raw[i]
+    }
+    setDisplay(formatted)
+    if (raw.length === 6) {
+      var d = raw.slice(0, 2)
+      var m = raw.slice(2, 4)
+      var y = '20' + raw.slice(4, 6)
+      onChange(y + '-' + m + '-' + d)
+    } else {
+      onChange('')
+    }
+  }
+
+  function handleCalendarClick() {
+    if (ref.current) {
+      ref.current.showPicker()
+    }
+  }
+
+  function handleCalendarChange(e) {
+    onChange(e.target.value)
+  }
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        inputMode="numeric"
+        value={display}
+        onChange={handleTextChange}
+        placeholder="dd/mm/aa"
+        className="w-full h-11 pl-3 pr-10 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
+      />
+      <button
+        type="button"
+        onClick={handleCalendarClick}
+        className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 text-text-muted hover:text-primary transition-colors"
+      >
+        <CalendarDays className="w-5 h-5" />
+      </button>
+      <input
+        ref={ref}
+        type="date"
+        value={value || ''}
+        onChange={handleCalendarChange}
+        className="sr-only"
+      />
+    </div>
+  )
 }
 
 export default function ReservasView() {
@@ -187,21 +253,11 @@ export default function ReservasView() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-sm text-text-muted font-medium">Fecha Desde</label>
-              <input
-                type="date"
-                value={fechaDesde}
-                onChange={function (e) { setFechaDesde(e.target.value); setOverlapError(null) }}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
-              />
+              <DateInput value={fechaDesde} onChange={function (v) { setFechaDesde(v); setOverlapError(null) }} />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm text-text-muted font-medium">Fecha Hasta</label>
-              <input
-                type="date"
-                value={fechaHasta}
-                onChange={function (e) { setFechaHasta(e.target.value); setOverlapError(null) }}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
-              />
+              <DateInput value={fechaHasta} onChange={function (v) { setFechaHasta(v); setOverlapError(null) }} />
             </div>
           </div>
 
