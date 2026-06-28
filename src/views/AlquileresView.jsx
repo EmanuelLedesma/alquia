@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Search, ChevronDown, Check } from 'lucide-react'
 import { supabase } from '../services/supabase'
@@ -34,11 +34,6 @@ function getStatus(senas, total) {
   return 'pendiente'
 }
 
-function formatDiasRange(desde, hasta) {
-  var d = diasEntre(desde, hasta)
-  return d + ' (' + formatDate(desde) + ' - ' + formatDate(hasta) + ')'
-}
-
 export default function AlquileresView() {
   var navigate = useNavigate()
 
@@ -46,6 +41,10 @@ export default function AlquileresView() {
   var [inmuebles, setInmuebles] = useState([])
   var [loading, setLoading] = useState(true)
   var [openDropdownId, setOpenDropdownId] = useState(null)
+  var [dropdownPos, setDropdownPos] = useState(null)
+  var [senadoInputVal, setSenadoInputVal] = useState({})
+  var [showSenadoInput, setShowSenadoInput] = useState(false)
+  var dropdownRef = useRef(null)
 
   var [search, setSearch] = useState('')
   var [yearFilter, setYearFilter] = useState('2026')
@@ -80,8 +79,10 @@ export default function AlquileresView() {
   useEffect(function () {
     if (!openDropdownId) return
     function handleClick(e) {
-      if (!e.target.closest('[data-dropdown]')) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target) && !e.target.closest('[data-badge]')) {
         setOpenDropdownId(null)
+        setDropdownPos(null)
+        setShowSenadoInput(false)
       }
     }
     document.addEventListener('mousedown', handleClick)
@@ -98,6 +99,8 @@ export default function AlquileresView() {
         }
       })
       setOpenDropdownId(null)
+      setDropdownPos(null)
+      setShowSenadoInput(false)
     } else if (newStatus === 'pendiente') {
       supabase.from('alquileres').update({ total_senas_recibidas: 0 }).eq('id', a.id).then(function (res) {
         if (!res.error) {
@@ -107,6 +110,8 @@ export default function AlquileresView() {
         }
       })
       setOpenDropdownId(null)
+      setDropdownPos(null)
+      setShowSenadoInput(false)
     }
   }
 
@@ -121,6 +126,21 @@ export default function AlquileresView() {
       }
     })
     setOpenDropdownId(null)
+    setDropdownPos(null)
+    setShowSenadoInput(false)
+  }
+
+  function handleBadgeClick(e, a) {
+    var rect = e.currentTarget.getBoundingClientRect()
+    if (openDropdownId === a.id) {
+      setOpenDropdownId(null)
+      setDropdownPos(null)
+    } else {
+      setDropdownPos({ top: rect.top, left: rect.left + rect.width / 2 })
+      setOpenDropdownId(a.id)
+      setSenadoInputVal(function (prev) { return { ...prev, [a.id]: '' } })
+      setShowSenadoInput(false)
+    }
   }
 
   var filtered = alquileres.filter(function (a) {
@@ -137,13 +157,11 @@ export default function AlquileresView() {
     return true
   })
 
-  var [senadoInputVal, setSenadoInputVal] = useState({})
-
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-text-main text-xl font-bold">Gesti\u00f3n de Alquileres</h1>
+          <h1 className="text-text-main text-xl font-bold">Gestión de Alquileres</h1>
           <p className="text-text-muted text-sm mt-0.5">Administra todos los alquileres</p>
         </div>
         <button
@@ -197,7 +215,7 @@ export default function AlquileresView() {
         >
           <option value="">Todos los estados</option>
           <option value="pagado">Pagado</option>
-          <option value="senado">Se\u00f1ado</option>
+          <option value="senado">Señado</option>
           <option value="pendiente">Pendiente</option>
         </select>
       </div>
@@ -210,10 +228,10 @@ export default function AlquileresView() {
               <th className="text-left text-text-muted font-medium px-4 py-3">Inmueble</th>
               <th className="text-left text-text-muted font-medium px-4 py-3">Entrada</th>
               <th className="text-left text-text-muted font-medium px-4 py-3">Salida</th>
-              <th className="text-right text-text-muted font-medium px-4 py-3">Se\u00f1a</th>
+              <th className="text-center text-text-muted font-medium px-4 py-3">Días</th>
+              <th className="text-right text-text-muted font-medium px-4 py-3">Seña</th>
               <th className="text-right text-text-muted font-medium px-4 py-3">Total</th>
               <th className="text-right text-text-muted font-medium px-4 py-3">Resto</th>
-              <th className="text-left text-text-muted font-medium px-4 py-3">D\u00edas</th>
               <th className="text-center text-text-muted font-medium px-4 py-3">Estado</th>
             </tr>
           </thead>
@@ -234,8 +252,6 @@ export default function AlquileresView() {
               var resto = total - senas
               var status = getStatus(senas, total)
               var dias = Number(a.cant_dias) || diasEntre(a.fecha_desde, a.fecha_hasta) || 0
-              var precio = Number(a.precio_por_dia) || 0
-              var recambio = Number(a.costo_recambio) || 0
               return (
                 <tr key={a.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3 text-text-main font-medium">
@@ -244,89 +260,27 @@ export default function AlquileresView() {
                   <td className="px-4 py-3 text-text-muted">{a.inmuebles?.nombre}</td>
                   <td className="px-4 py-3 text-text-muted">{formatDate(a.fecha_desde)}</td>
                   <td className="px-4 py-3 text-text-muted">{formatDate(a.fecha_hasta)}</td>
+                  <td className="px-4 py-3 text-center text-text-main font-medium tabular-nums">
+                    {dias}
+                  </td>
                   <td className="px-4 py-3 text-right text-text-main font-medium">
-                    {senas > 0 ? formatCurrency(senas) : '\u2014'}
+                    {status === 'pagado' ? '—' : senas > 0 ? formatCurrency(senas) : '—'}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="text-text-main font-medium">{formatCurrency(total)}</div>
-                    <div className="text-[10px] text-text-muted leading-tight">
-                      {dias} {'\u00d7'} {formatCurrency(precio)}{recambio > 0 ? ' + ' + formatCurrency(recambio) : ''}
-                    </div>
                   </td>
                   <td className="px-4 py-3 text-right text-text-main font-medium">
-                    {resto > 0 ? formatCurrency(resto) : '\u2014'}
+                    {resto > 0 ? formatCurrency(resto) : '—'}
                   </td>
-                  <td className="px-4 py-3 text-text-muted text-xs">
-                    {formatDiasRange(a.fecha_desde, a.fecha_hasta)}
-                  </td>
-                  <td className="px-4 py-3 text-center relative">
+                  <td className="px-4 py-3 text-center">
                     <button
-                      data-dropdown="true"
-                      onClick={function () {
-                        setOpenDropdownId(openDropdownId === a.id ? null : a.id)
-                        if (openDropdownId !== a.id) {
-                          setSenadoInputVal(function (prev) { return { ...prev, [a.id]: String(senas) } })
-                        }
-                      }}
+                      data-badge="true"
+                      onClick={function (e) { handleBadgeClick(e, a) }}
                       className={'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ' + (STATUS_COLORS[status] || '')}
                     >
                       {STATUS_DISPLAY[status] || status}
                       <ChevronDown className="w-3 h-3" />
                     </button>
-
-                    {openDropdownId === a.id && (
-                      <div
-                        data-dropdown="true"
-                        className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 bg-surface border border-slate-200 rounded-xl shadow-lg p-1 min-w-[140px]"
-                      >
-                        <button
-                          data-dropdown="true"
-                          onClick={function () { handleQuickStatus(a, 'pagado') }}
-                          className={'w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-slate-100 ' + (status === 'pagado' ? 'bg-green-100 text-green-700 font-semibold' : 'text-text-main')}
-                        >
-                          Pagado
-                        </button>
-
-                        <div className="px-1 py-0.5">
-                          <div
-                            data-dropdown="true"
-                            className={'w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ' + (status === 'senado' ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-text-main')}
-                          >
-                            Se\u00f1ado
-                          </div>
-                          <div data-dropdown="true" className="px-1 pt-1 pb-1.5 space-y-1">
-                            <input
-                              data-dropdown="true"
-                              type="text"
-                              inputMode="numeric"
-                              value={senadoInputVal[a.id] || ''}
-                              onChange={function (e) {
-                                var v = e.target.value.replace(/\D/g, '')
-                                setSenadoInputVal(function (prev) { return { ...prev, [a.id]: v } })
-                              }}
-                              placeholder="Monto de la se\u00f1a"
-                              className="w-full h-8 px-2 rounded-lg border border-slate-200 bg-surface text-text-main text-xs text-right"
-                            />
-                            <button
-                              data-dropdown="true"
-                              onClick={function () { handleConfirmSenado(a) }}
-                              className="w-full h-7 rounded-lg bg-primary text-white text-xs font-medium flex items-center justify-center gap-1"
-                            >
-                              <Check className="w-3 h-3" />
-                              Confirmar
-                            </button>
-                          </div>
-                        </div>
-
-                        <button
-                          data-dropdown="true"
-                          onClick={function () { handleQuickStatus(a, 'pendiente') }}
-                          className={'w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-slate-100 ' + (status === 'pendiente' ? 'bg-gray-100 text-gray-600 font-semibold' : 'text-text-main')}
-                        >
-                          Pendiente
-                        </button>
-                      </div>
-                    )}
                   </td>
                 </tr>
               )
@@ -334,6 +288,68 @@ export default function AlquileresView() {
           </tbody>
         </table>
       </div>
+
+      {openDropdownId && dropdownPos && (function () {
+        var a = alquileres.find(function (x) { return x.id === openDropdownId })
+        if (!a) return null
+        var senas = Number(a.total_senas_recibidas) || 0
+        var total = Number(a.monto_total) || 0
+        var status = getStatus(senas, total)
+        return (
+          <div
+            ref={dropdownRef}
+            className="fixed z-[9999] bg-surface border border-slate-200 rounded-xl shadow-lg p-1 min-w-[160px]"
+            style={{
+              top: dropdownPos.top + 'px',
+              left: dropdownPos.left + 'px',
+              transform: 'translateX(-50%)',
+            }}
+          >
+            <button
+              onClick={function () { handleQuickStatus(a, 'pagado') }}
+              className={'w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-slate-100 ' + (status === 'pagado' ? 'bg-green-100 text-green-700 font-semibold' : 'text-text-main')}
+            >
+              Pagado
+            </button>
+
+            <div className="px-1 py-0.5">
+              <button
+                onClick={function () { setShowSenadoInput(!showSenadoInput) }}
+                className={'w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-slate-100 ' + (status === 'senado' ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-text-main')}
+              >
+                Señado
+              </button>
+              {showSenadoInput && <div className="px-1 pt-1 pb-1.5 space-y-1">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={senadoInputVal[a.id] || ''}
+                  onChange={function (e) {
+                    var v = e.target.value.replace(/\D/g, '')
+                    setSenadoInputVal(function (prev) { return { ...prev, [a.id]: v } })
+                  }}
+                  placeholder="Monto de la seña"
+                  className="w-full h-8 px-2 rounded-lg border border-slate-200 bg-surface text-text-main text-xs text-right"
+                />
+                <button
+                  onClick={function () { handleConfirmSenado(a) }}
+                  className="w-full h-7 rounded-lg bg-primary text-white text-xs font-medium flex items-center justify-center gap-1"
+                >
+                  <Check className="w-3 h-3" />
+                  Confirmar
+                </button>
+              </div>}
+            </div>
+
+            <button
+              onClick={function () { handleQuickStatus(a, 'pendiente') }}
+              className={'w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-slate-100 ' + (status === 'pendiente' ? 'bg-gray-100 text-gray-600 font-semibold' : 'text-text-main')}
+            >
+              Pendiente
+            </button>
+          </div>
+        )
+      })()}
     </div>
   )
 }

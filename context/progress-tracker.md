@@ -33,18 +33,16 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 - [Unidad 9.11] Mejora AlquileresView: estados cambiados a Pagado/Señado/Pendiente. Nuevas columnas: Seña, Resto, Días. Badge clickeable con dropdown inline para cambiar estado + UPDATE en Supabase. Requiere columna `estado` en `alquileres`.
 
 ## Próximo a Hacer
-- (ninguno por el momento)
-- Continuar con próximas unidades cuando sea indicado.
-
-## Preguntas Abiertas
-- La columna `costo_recambio` requería `ALTER TABLE` en Supabase (ya existe).
-- Las columnas `cant_dias` y `anio_temporada` también requerían `ALTER TABLE` (ya existen).
+- Bucket `fotos-inmuebles` debe ser público con RLS policies en Supabase Storage.
+- Columnas `email`, `celular`, `direccion`, `observaciones` faltantes en `clientes`.
+- Actualizar CHECK constraint de `estado` en `clientes` para incluir `'archivado'`.
 
 ## Decisiones de Arquitectura
 - Se utilizará Supabase como BaaS.
 - Se adopta enfoque Mobile-First estricto con PWA.
 - Inputs numéricos usan `type="text" inputMode="numeric"` en vez de `type="number"` para evitar bugs de React con valores vacíos.
 - Parseo manual de fechas (`split('-')` + `new Date(año, mes-1, día)`) en `addDays` y `diasEntre` para evitar desfase por zona horaria.
+- Dropdown de estado en AlquileresView usa `position: fixed` + `getBoundingClientRect()` para no ser cortado por `overflow-x-auto` del contenedor tabla.
 
 ## Notas de Sesión
 - Se corrigió `addDays` en `ReservasView.jsx`: `new Date(dateStr)` parseaba como UTC, generando fechas incorrectas en huso Argentina (UTC-3). Se reemplazó por parseo manual.
@@ -56,3 +54,5 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 - Refactor completo del calendario: se eliminó `AvailabilityCalendar.jsx` y `MonthGrid.jsx`. Se crearon `YearGallery.jsx` (orquestador con año y filtro), `MiniMonthGrid.jsx` (grilla comprimida de un mes), y `SeasonFilter.jsx` (panel de píldoras para filtrar meses). Default: Dic–Abr (temporada verano Argentina). Selector de año con flechas. Reemplazado en `CalendarioView.jsx` e `InmuebleDetalleView.jsx`.
 - Se creó `AlquileresView.jsx` (ruta `/alquileres`, 5to item en BottomNav): tabla de gestión con filtros (año, inmueble, estado, búsqueda).
 - Estados cambiados a Pagado/Señado/Pendiente (computados desde total_senas_recibidas vs monto_total). Columnas: Seña, Total (con desglose `días × precio + recambio`), Resto, Días (con rango). Badge clickeable → dropdown inline para cambiar estado: Pagado/Pendiente accion directa, Señado abre input editable para ingresar/modificar monto de la seña.
+- Se reemplazaron todos los escapes Unicode en `AlquileresView.jsx` por caracteres literales.
+- Se corrigió dropdown de estado cortado: se reemplazó `position: absolute` + `right-0` por `position: fixed` con posicionamiento dinámico vía `getBoundingClientRect()` para sortear el `overflow-x-auto` del contenedor de la tabla.
