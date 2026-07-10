@@ -212,7 +212,17 @@ export default function ReservasView() {
         setSubmitError(res.error.message)
         return
       }
-      if (res.data) {
+      if (res.data && cNum > 0) {
+        supabase.from('gastos').insert({
+          concepto: 'Recambio - ' + (inmuebleNombre || '') + ' (alquiler #' + res.data.id + ')',
+          monto: cNum,
+          fecha: fechaDesde,
+          anio_temporada: Number(fechaDesde.split('-')[0]),
+          inmueble_id: Number(inmuebleId),
+        }).then(function () {
+          navigate('/reservas/' + res.data.id, { replace: true })
+        })
+      } else if (res.data) {
         navigate('/reservas/' + res.data.id, { replace: true })
       }
     })
@@ -321,29 +331,35 @@ export default function ReservasView() {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-sm text-text-muted font-medium">Precio por Día</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={precioPorDia}
-              onChange={function (e) {
-                var val = e.target.value.replace(/\D/g, '')
-                setPrecioPorDia(val)
-              }}
-              className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm font-medium">$</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={precioPorDia ? Number(precioPorDia).toLocaleString('es-AR') : ''}
+                onChange={function (e) {
+                  var val = e.target.value.replace(/\D/g, '')
+                  setPrecioPorDia(val)
+                }}
+                className="w-full h-11 pl-7 pr-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
+              />
+            </div>
           </div>
           <div className="space-y-1.5">
             <label className="text-sm text-text-muted font-medium">Costo Recambio</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={costoRecambio}
-              onChange={function (e) {
-                var val = e.target.value.replace(/\D/g, '')
-                setCostoRecambio(val)
-              }}
-              className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm font-medium">$</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={costoRecambio ? Number(costoRecambio).toLocaleString('es-AR') : ''}
+                onChange={function (e) {
+                  var val = e.target.value.replace(/\D/g, '')
+                  setCostoRecambio(val)
+                }}
+                className="w-full h-11 pl-7 pr-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
+              />
+            </div>
           </div>
         </div>
 

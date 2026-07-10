@@ -151,13 +151,20 @@ export default function ReservaDetalleView() {
       <div className="bg-surface rounded-xl shadow-sm p-4 space-y-3">
         <h2 className="text-text-main font-semibold">Nueva Seña</h2>
         <div className="flex gap-2">
-          <input
-            type="number"
-            value={nuevoMonto}
-            onChange={(e) => setNuevoMonto(e.target.value)}
-            placeholder="Monto"
-            className="flex-1 h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
-          />
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm font-medium">$</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={nuevoMonto ? Number(nuevoMonto).toLocaleString('es-AR') : ''}
+              onChange={(e) => {
+                var v = e.target.value.replace(/\D/g, '')
+                setNuevoMonto(v)
+              }}
+              placeholder="Monto"
+              className="w-full h-11 pl-7 pr-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
+            />
+          </div>
           <button
             onClick={handleAgregarSena}
             disabled={!nuevoMonto || Number(nuevoMonto) <= 0}

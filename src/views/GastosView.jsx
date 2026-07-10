@@ -37,6 +37,7 @@ export default function GastosView() {
   var [periodo, setPeriodo] = useState('todo')
   var [yearFilter, setYearFilter] = useState(String(new Date().getFullYear()))
   var [monthFilter, setMonthFilter] = useState('')
+  var [tipoFilter, setTipoFilter] = useState('todo')
 
   var [showModal, setShowModal] = useState(false)
   var [tipoMov, setTipoMov] = useState('gasto')
@@ -195,25 +196,31 @@ export default function GastosView() {
     return 0
   })
 
-  // Apply date filter
+  // Apply filters
   var filtered = transacciones
 
   if (periodo === 'año') {
-    filtered = transacciones.filter(function (t) {
+    filtered = filtered.filter(function (t) {
       return getYear(t.fecha) === yearFilter
     })
   } else if (periodo === 'mes') {
-    filtered = transacciones.filter(function (t) {
+    filtered = filtered.filter(function (t) {
       return getYear(t.fecha) === yearFilter && getMonth(t.fecha) === monthFilter
     })
   }
 
-  // Compute KPIs from filtered data
+  if (tipoFilter === 'ingreso') {
+    filtered = filtered.filter(function (t) { return t.tipo === 'Ingreso' })
+  } else if (tipoFilter === 'gasto') {
+    filtered = filtered.filter(function (t) { return t.tipo === 'Gasto' })
+  }
+
+  // Compute KPIs from ALL data (unfiltered)
   var ingresosTotal = 0
   var gastosTotal = 0
 
-  for (var fi = 0; fi < filtered.length; fi++) {
-    var ft = filtered[fi]
+  for (var fi = 0; fi < transacciones.length; fi++) {
+    var ft = transacciones[fi]
     if (ft.tipo === 'Ingreso') {
       ingresosTotal += ft.monto
     } else {
@@ -240,47 +247,6 @@ export default function GastosView() {
           <Plus className="w-4 h-4" />
           Nuevo Movimiento
         </button>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={periodo}
-          onChange={function (e) { setPeriodo(e.target.value) }}
-          className="h-10 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none"
-        >
-          <option value="todo">Todo el tiempo</option>
-          <option value="año">Por a&ntilde;o</option>
-          <option value="mes">Por mes</option>
-        </select>
-
-        {showYearSelect && (
-          <select
-            value={yearFilter}
-            onChange={function (e) { setYearFilter(e.target.value) }}
-            className="h-10 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none"
-          >
-            <option value="2024">2024</option>
-            <option value="2025">2025</option>
-            <option value="2026">2026</option>
-            <option value="2027">2027</option>
-            <option value="2028">2028</option>
-          </select>
-        )}
-
-        {showMonthSelect && (
-          <select
-            value={monthFilter}
-            onChange={function (e) { setMonthFilter(e.target.value) }}
-            className="h-10 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none"
-          >
-            <option value="">Seleccionar mes</option>
-            {MONTHS.map(function (m, idx) {
-              var val = String(idx + 1)
-              if (val.length === 1) val = '0' + val
-              return <option key={val} value={val}>{m}</option>
-            })}
-          </select>
-        )}
       </div>
 
       {loading ? (
@@ -311,6 +277,57 @@ export default function GastosView() {
               </div>
               <p className={'text-2xl font-bold ' + (balance >= 0 ? 'text-green-600' : 'text-red-500')}>{formatCurrency(balance)}</p>
             </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={periodo}
+              onChange={function (e) { setPeriodo(e.target.value) }}
+              className="h-10 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none"
+            >
+              <option value="todo">Todo el tiempo</option>
+              <option value="año">Por a&ntilde;o</option>
+              <option value="mes">Por mes</option>
+            </select>
+
+            {showYearSelect && (
+              <select
+                value={yearFilter}
+                onChange={function (e) { setYearFilter(e.target.value) }}
+                className="h-10 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none"
+              >
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+              </select>
+            )}
+
+            <select
+              value={tipoFilter}
+              onChange={function (e) { setTipoFilter(e.target.value) }}
+              className="h-10 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none"
+            >
+              <option value="todo">Todo</option>
+              <option value="ingreso">Ingresos</option>
+              <option value="gasto">Gastos</option>
+            </select>
+
+            {showMonthSelect && (
+              <select
+                value={monthFilter}
+                onChange={function (e) { setMonthFilter(e.target.value) }}
+                className="h-10 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none"
+              >
+                <option value="">Seleccionar mes</option>
+                {MONTHS.map(function (m, idx) {
+                  var val = String(idx + 1)
+                  if (val.length === 1) val = '0' + val
+                  return <option key={val} value={val}>{m}</option>
+                })}
+              </select>
+            )}
           </div>
 
           <div className="overflow-x-auto -mx-4">

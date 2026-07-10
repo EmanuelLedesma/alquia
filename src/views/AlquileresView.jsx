@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, ChevronDown, Pencil } from 'lucide-react'
+import { Plus, Search, ChevronDown, Pencil, X } from 'lucide-react'
 import { supabase } from '../services/supabase'
 import { diasEntre } from '../lib/utils'
 
@@ -49,10 +49,12 @@ export default function AlquileresView() {
   var dropdownRef = useRef(null)
 
   var [search, setSearch] = useState('')
-  var [yearFilter, setYearFilter] = useState('2026')
+  var [yearFilter, setYearFilter] = useState('')
   var [inmuebleFilter, setInmuebleFilter] = useState('')
   var [statusFilter, setStatusFilter] = useState('')
-  var [recambioPagado, setRecambioPagado] = useState({})
+  var [recambioPagado, setRecambioPagado] = useState(function () {
+    try { return JSON.parse(localStorage.getItem('recambioPagado') || '{}') } catch (e) { return {} }
+  })
   var [recambioGastoId, setRecambioGastoId] = useState({})
 
   function cerrarDropdown() {
@@ -82,8 +84,20 @@ export default function AlquileresView() {
     }
 
     query.order('fecha_desde', { ascending: false }).then(function (res) {
-      if (res.data) setAlquileres(res.data)
-      setLoading(false)
+      if (!res.data) { setLoading(false); return }
+      setAlquileres(res.data)
+      var promesas = res.data.filter(function (a) { return a.costo_recambio }).map(function (a) {
+        var concepto = 'Recambio - ' + (a.inmuebles?.nombre || '') + ' (alquiler #' + a.id + ')'
+        return supabase.from('gastos').select('id').eq('concepto', concepto).maybeSingle().then(function (r) {
+          return r.data ? { id: a.id, gastoId: r.data.id } : null
+        })
+      })
+      Promise.all(promesas).then(function (results) {
+        var map = {}
+        results.forEach(function (r) { if (r) map[r.id] = r.gastoId })
+        setRecambioGastoId(map)
+        setLoading(false)
+      })
     })
   }, [yearFilter, inmuebleFilter])
 
@@ -222,34 +236,27 @@ export default function AlquileresView() {
     })
   }
 
-  function toggleRecambio(a) {
-    var id = a.id
-    if (recambioPagado[id]) {
-      var gastoId = recambioGastoId[id]
-      if (gastoId) {
-        supabase.from('gastos').delete().eq('id', gastoId).then(function () {
-          setRecambioGastoId(function (prev) { var n = { ...prev }; delete n[id]; return n })
-          setRecambioPagado(function (prev) { var n = { ...prev }; delete n[id]; return n })
-        })
-      } else {
-        setRecambioPagado(function (prev) { var n = { ...prev }; delete n[id]; return n })
-      }
-    } else {
-      var today = new Date().toISOString().slice(0, 10)
-      var data = {
-        concepto: 'Recambio - ' + (a.inmuebles?.nombre || ''),
-        monto: Number(a.costo_recambio),
-        fecha: today,
-        anio_temporada: Number(today.split('-')[0]),
-      }
-      if (a.inmueble_id) data.inmueble_id = Number(a.inmueble_id)
-      supabase.from('gastos').insert(data).select().single().then(function (res) {
-        if (res.data) {
-          setRecambioGastoId(function (prev) { return { ...prev, [id]: res.data.id } })
-          setRecambioPagado(function (prev) { return { ...prev, [id]: true } })
-        }
+  function handleDelete(a) {
+    if (!window.confirm('¿Eliminar alquiler de ' + (a.clientes?.nombre || '') + ' ' + (a.clientes?.apellido || '') + '?')) return
+    var gastoId = recambioGastoId[a.id]
+    Promise.all([
+      supabase.from('senas').delete().eq('alquiler_id', a.id),
+      gastoId ? supabase.from('gastos').delete().eq('id', gastoId) : Promise.resolve(),
+    ]).then(function () {
+      supabase.from('alquileres').delete().eq('id', a.id).then(function () {
+        setAlquileres(function (prev) { return prev.filter(function (x) { return x.id !== a.id }) })
+        setRecambioPagado(function (prev) { var n = { ...prev }; delete n[a.id]; return n })
+        setRecambioGastoId(function (prev) { var n = { ...prev }; delete n[a.id]; return n })
       })
-    }
+    })
+  }
+
+  function toggleRecambio(id) {
+    setRecambioPagado(function (prev) {
+      var next = { ...prev, [id]: !prev[id] }
+      localStorage.setItem('recambioPagado', JSON.stringify(next))
+      return next
+    })
   }
 
   function handleBadgeClick(e, a) {
@@ -296,53 +303,53 @@ export default function AlquileresView() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <div className="relative flex-1 min-w-[160px]">
+          <div className="relative flex-1 min-w-[160px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
           <input
             type="text"
-            placeholder="Buscar cliente o inmueble..."
+            placeholder="Buscar cliente..."
             value={search}
             onChange={function (e) { setSearch(e.target.value) }}
-            className="w-full h-10 pl-9 pr-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
+            className="w-full h-10 pl-9 pr-3 rounded-xl bg-white text-text-main text-sm border border-slate-200"
           />
+          </div>
+
+          <select
+            value={yearFilter}
+            onChange={function (e) { setYearFilter(e.target.value) }}
+            className="h-10 px-3 rounded-xl bg-primary text-white text-sm appearance-none font-medium"
+          >
+            <option value="" style={{ background: '#fff', color: '#333' }}>Todos los a&ntilde;os</option>
+            {Array.from({ length: 11 }, function (_, i) {
+              var y = 2020 + i
+              return <option key={y} value={y} style={{ background: '#fff', color: '#333' }}>{y}</option>
+            })}
+          </select>
+
+          <select
+            value={inmuebleFilter}
+            onChange={function (e) { setInmuebleFilter(e.target.value) }}
+            className="h-10 px-3 rounded-xl bg-primary text-white text-sm appearance-none font-medium"
+          >
+            <option value="" style={{ background: '#fff', color: '#333' }}>Todos los inmuebles</option>
+            {inmuebles.map(function (i) {
+              return <option key={i.id} value={i.id} style={{ background: '#fff', color: '#333' }}>{i.nombre}</option>
+            })}
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={function (e) { setStatusFilter(e.target.value) }}
+            className="h-10 px-3 rounded-xl bg-primary text-white text-sm appearance-none font-medium"
+          >
+            <option value="" style={{ background: '#fff', color: '#333' }}>Todos los estados</option>
+            <option value="pagado" style={{ background: '#fff', color: '#333' }}>Pagado</option>
+            <option value="senado" style={{ background: '#fff', color: '#333' }}>Señado</option>
+            <option value="pendiente" style={{ background: '#fff', color: '#333' }}>Pendiente</option>
+          </select>
         </div>
 
-        <select
-          value={yearFilter}
-          onChange={function (e) { setYearFilter(e.target.value) }}
-          className="h-10 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none"
-        >
-          <option value="2024">2024</option>
-          <option value="2025">2025</option>
-          <option value="2026">2026</option>
-          <option value="2027">2027</option>
-          <option value="2028">2028</option>
-        </select>
-
-        <select
-          value={inmuebleFilter}
-          onChange={function (e) { setInmuebleFilter(e.target.value) }}
-          className="h-10 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none"
-        >
-          <option value="">Todos los inmuebles</option>
-          {inmuebles.map(function (i) {
-            return <option key={i.id} value={i.id}>{i.nombre}</option>
-          })}
-        </select>
-
-        <select
-          value={statusFilter}
-          onChange={function (e) { setStatusFilter(e.target.value) }}
-          className="h-10 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none"
-        >
-          <option value="">Todos los estados</option>
-          <option value="pagado">Pagado</option>
-          <option value="senado">Señado</option>
-          <option value="pendiente">Pendiente</option>
-        </select>
-      </div>
-
-      <div className="overflow-x-auto -mx-4">
+        <div className="overflow-x-auto -mx-4">
         <table className="w-full text-sm whitespace-nowrap">
           <thead>
             <tr className="border-b border-slate-200">
@@ -356,17 +363,18 @@ export default function AlquileresView() {
               <th className="text-right text-text-muted font-medium px-4 py-3">Total</th>
               <th className="text-right text-text-muted font-medium px-4 py-3">Resto</th>
               <th className="text-center text-text-muted font-medium px-4 py-3">Estado</th>
+              <th className="w-10 px-2 py-3" />
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={10} className="text-center text-text-muted py-8">Cargando...</td>
+                <td colSpan={11} className="text-center text-text-muted py-8">Cargando...</td>
               </tr>
             )}
             {!loading && filtered.length === 0 && (
               <tr>
-                <td colSpan={10} className="text-center text-text-muted py-8">No se encontraron alquileres.</td>
+                <td colSpan={11} className="text-center text-text-muted py-8">No se encontraron alquileres.</td>
               </tr>
             )}
             {!loading && filtered.map(function (a) {
@@ -388,7 +396,7 @@ export default function AlquileresView() {
                         <input
                           type="checkbox"
                           checked={!!recambioPagado[a.id]}
-                          onChange={function () { toggleRecambio(a) }}
+                          onChange={function () { toggleRecambio(a.id) }}
                           className="w-3.5 h-3.5 rounded border-slate-300 text-primary accent-primary shrink-0"
                         />
                       </span>
@@ -418,6 +426,15 @@ export default function AlquileresView() {
                       <ChevronDown className="w-3 h-3" />
                     </button>
                   </td>
+                  <td className="px-2 py-3 text-center">
+                    <button
+                      onClick={function () { handleDelete(a) }}
+                      className="text-text-muted hover:text-red-500 transition-colors p-0.5"
+                      title="Eliminar alquiler"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
                 </tr>
               )
             })}
@@ -445,6 +462,7 @@ export default function AlquileresView() {
                   <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(sumTotal)}</td>
                   <td className={'px-4 py-3 text-right tabular-nums ' + (sumResto > 0 ? 'text-red-300' : '')}>{formatCurrency(sumResto)}</td>
                   <td className="px-4 py-3" />
+                  <td className="px-2 py-3" />
                 </tr>
               </tfoot>
             )
@@ -502,18 +520,21 @@ export default function AlquileresView() {
                 Señado
               </button>
               {showSenadoInput && <div className="px-1 pt-1 pb-1.5 space-y-1.5">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={senadoInputVal[a.id] || ''}
-                  onChange={function (e) {
-                    var v = e.target.value.replace(/\D/g, '')
-                    setSenadoInputVal(function (prev) { return { ...prev, [a.id]: v } })
-                    setDropdownError('')
-                  }}
-                  placeholder="Monto"
-                  className="w-full h-8 px-2 rounded-lg border border-slate-200 bg-surface text-text-main text-xs text-right"
-                />
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-text-muted text-[10px] font-medium">$</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={senadoInputVal[a.id] ? Number(senadoInputVal[a.id]).toLocaleString('es-AR') : ''}
+                    onChange={function (e) {
+                      var v = e.target.value.replace(/\D/g, '')
+                      setSenadoInputVal(function (prev) { return { ...prev, [a.id]: v } })
+                      setDropdownError('')
+                    }}
+                    placeholder="Monto"
+                    className="w-full h-8 pl-5 pr-2 rounded-lg border border-slate-200 bg-surface text-text-main text-xs text-right"
+                  />
+                </div>
                 {dropdownError && (
                   <p className="text-[10px] text-red-500 leading-tight px-0.5">{dropdownError}</p>
                 )}
