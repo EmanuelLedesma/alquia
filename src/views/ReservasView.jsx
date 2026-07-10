@@ -119,7 +119,7 @@ export default function ReservasView() {
     window.history.replaceState({}, '')
 
     Promise.all([
-      supabase.from('inmuebles').select('id, nombre'),
+      supabase.from('inmuebles').select('id, nombre, costo_recambio'),
       supabase.from('clientes').select('id, nombre, apellido'),
     ]).then(function (r) {
       var inmueblesRes = r[0]
@@ -245,7 +245,17 @@ export default function ReservasView() {
           <label className="text-sm text-text-muted font-medium">Inmueble</label>
           <select
             value={inmuebleId}
-            onChange={function (e) { setInmuebleId(e.target.value); setOverlapError(null) }}
+            onChange={function (e) {
+              var newId = e.target.value
+              setInmuebleId(newId)
+              setOverlapError(null)
+              if (newId) {
+                var sel = inmuebles.find(function (x) { return String(x.id) === newId })
+                if (sel && Number(sel.costo_recambio) > 0 && costoRecambio === '') {
+                  setCostoRecambio(String(Number(sel.costo_recambio)))
+                }
+              }
+            }}
             className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none"
           >
             <option value="">Seleccionar inmueble</option>

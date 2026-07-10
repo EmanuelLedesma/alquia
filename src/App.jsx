@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
 import ProtectedRoute from './components/auth/ProtectedRoute'
-import InmueblesView from './views/InmueblesView'
+import PanelControlView from './views/PanelControlView'
 import InmuebleDetalleView from './views/InmuebleDetalleView'
 import ClientesView from './views/ClientesView'
 import CalendarioView from './views/CalendarioView'
@@ -18,7 +18,7 @@ export default function App() {
         <Route path="/login" element={<LoginView />} />
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
-            <Route path="/" element={<InmueblesView />} />
+            <Route path="/" element={<PanelControlView />} />
             <Route path="/inmuebles/:id" element={<InmuebleDetalleView />} />
             <Route path="/clientes" element={<ClientesView />} />
             <Route path="/calendario" element={<CalendarioView />} />

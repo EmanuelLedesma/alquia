@@ -31,7 +31,7 @@ context/               # Six-file context system + specs
 
 | Tabla | Propósito |
 |-------|-----------|
-| `inmuebles` | Dúplex: nombre, descripción, fotos, precio, texto disponibilidad |
+| `inmuebles` | Dúplex: nombre, descripción, fotos, precio, texto disponibilidad, `costo_recambio` |
 | `clientes` | Personas: datos contacto, estado (prospecto/activo/archivado), grupo familiar |
 | `alquileres` | Reservas: fechas, montos, señas recibidas, inmueble_id, cliente_id |
 | `senas` | Pagos parciales vinculados a un alquiler |

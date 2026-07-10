@@ -34,6 +34,7 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 - [Unidad 12.1] Re-sync documental — progress-tracker, build plan, specs 13–19 — Completado.
 - [Unidad 13] Fixes de base de datos Supabase — migraciones en `supabase/migrations/` — Completado.
 - [Unidad 13.1] Fixes post-merge: fecha_hasta exclusiva en calendario, timezone UTC-3 en display de fechas, recambio resta del total, auto-fill inmueble al reservar desde calendario, skip modal en días libres — Completado.
+- [Unidad 14.5] Panel de Control — reemplaza Panel de Inmuebles en `/`. `costo_recambio` ahora vive en `inmuebles` y autocompleta en reservas. Galería multi-foto, métricas inline por inmueble (reservas + ingresos del año), accesos rápidos, resumen del mes, próximas reservas, alertas de pendientes. BottomNav: "Inmuebles" → "Control" — Completado.
 
 ## En Progreso
 - Ninguno.
@@ -50,7 +51,7 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 
 ## Decisiones de Arquitectura
 - Supabase como BaaS; auth single-user con rutas protegidas.
-- Mobile-first estricto; bottom nav con 5 items: Inmuebles, Clientes, Calendario, Alquileres, Gastos.
+- Mobile-first estricto; bottom nav con 5 items: Control, Clientes, Calendario, Alquileres, Gastos.
 - `/reservas` accesible solo por navegación contextual (Calendario, Alquileres +, YearGallery) — no está en BottomNav.
 - UI: Tailwind CSS custom con `createPortal` para modales. **No shadcn/ui instalado** (decisión v0.1.1).
 - Inputs numéricos: `type="text" inputMode="numeric"` + filtro `replace(/\D/g, '')`.
@@ -59,6 +60,14 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 - Cálculos financieros en funciones puras dentro de `/src/lib`.
 
 ## Notas de Sesión (última)
+- Unidad 14.5 (2026-07-10): Panel de Control.
+  - `inmuebles.costo_recambio` (numeric) agregado vía `scripts/add_costo_recambio_inmuebles.sql`. Aplicar en Supabase SQL Editor.
+  - `PanelControlView.jsx` reemplaza a `InmueblesView.jsx` (borrado). Ruta `/` ahora abre el panel con: header, 4 accesos rápidos, 3 KPIs del mes, top 3 próximas reservas, alertas de pendientes, grid de cards de inmuebles.
+  - Cards de inmuebles: carrusel multi-foto (swipe via chevron + dots), badge recambio editable inline (autosave onBlur), métricas inline (reservas año + ingresos año).
+  - `InmuebleDetalleView.jsx`: chip recambio read-only, galería completa con dots y navegación.
+  - `ReservasView.jsx`: `select('id, nombre, costo_recambio')`; al elegir inmueble con `costo_recambio > 0` y campo recambio vacío, autollena. Editable por el usuario.
+  - `BottomNav.jsx`: label "Inmuebles" → "Control".
+  - `App.jsx`: import + ruta actualizados.
 - Unidad 13.1 (2026-07-09): Fixes de bugs en calendario y reservas.
   - `MiniMonthGrid.jsx`/`YearGallery.jsx`: `day < r._hasta` en vez de `<=` — el último día (checkout) queda libre.
   - `DayDetailSheet.jsx`/`ReservasView.jsx`/`ReservaDetalleView.jsx`: `new Date(isoString)` → `new Date(+p[0], +p[1]-1, +p[2])` para evitar shift de UTC-3 en Argentina.

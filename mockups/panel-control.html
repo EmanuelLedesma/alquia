@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Control — Alquia Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#0284c7', dark: '#0369a1' },
+            secondary: '#e0f2fe',
+            background: '#f8fafc',
+            surface: '#ffffff',
+            'text-main': '#0f172a',
+            'text-muted': '#64748b',
+            accent: '#f59e0b',
+          },
+        },
+      },
+    }
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body class="bg-background text-text-main min-h-screen pb-24">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-slate-100">
+    <div class="max-w-md mx-auto flex items-center justify-between px-4 h-12">
+      <span class="font-bold text-text-main">Alquia</span>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-text-muted">Hola, Ema</span>
+        <button class="text-text-muted hover:text-red-500 transition-colors" aria-label="Cerrar sesión">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-5">
+
+    <!-- Title -->
+    <div>
+      <p class="text-[11px] uppercase tracking-widest text-primary font-semibold">Temporada 2026</p>
+      <h1 class="text-2xl font-bold text-text-main mt-1">Panel de control</h1>
+    </div>
+
+    <!-- Balance card -->
+    <div
+      class="rounded-2xl p-5 text-white relative overflow-hidden"
+      style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);"
+    >
+      <div class="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-white/10"></div>
+      <div class="absolute -bottom-20 -left-10 w-40 h-40 rounded-full bg-white/5"></div>
+
+      <p class="text-[11px] uppercase tracking-widest text-white/80 font-semibold relative">
+        Ingresos de la temporada
+      </p>
+      <p class="text-4xl font-bold mt-2 relative tabular-nums">$1.250.000</p>
+
+      <div class="mt-5 pt-4 border-t border-white/20 flex justify-between relative">
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-white/70 font-medium">Gastos</p>
+          <p class="text-sm font-semibold mt-0.5 tabular-nums">$420.000</p>
+        </div>
+        <div class="text-right">
+          <p class="text-[10px] uppercase tracking-wider text-white/70 font-medium">Neto</p>
+          <p class="text-sm font-semibold mt-0.5 tabular-nums">$830.000</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Occupancy -->
+    <section>
+      <h2 class="text-text-main font-semibold text-sm mb-2.5">Ocupación por inmueble</h2>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-white rounded-xl p-3 shadow-sm">
+          <p class="text-text-muted text-[10px] uppercase tracking-wider font-medium">Dúplex A</p>
+          <p class="text-xl font-bold text-text-main mt-1 tabular-nums">38%</p>
+          <div class="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full bg-primary rounded-full" style="width: 38%"></div>
+          </div>
+          <p class="text-text-muted text-[10px] mt-1.5 tabular-nums">45/120 días</p>
+        </div>
+        <div class="bg-white rounded-xl p-3 shadow-sm">
+          <p class="text-text-muted text-[10px] uppercase tracking-wider font-medium">Dúplex B</p>
+          <p class="text-xl font-bold text-text-main mt-1 tabular-nums">22%</p>
+          <div class="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full bg-primary rounded-full" style="width: 22%"></div>
+          </div>
+          <p class="text-text-muted text-[10px] mt-1.5 tabular-nums">27/120 días</p>
+        </div>
+        <button
+          class="border-2 border-dashed border-slate-300 rounded-xl p-3 flex flex-col items-center justify-center text-text-muted hover:border-primary hover:text-primary transition-colors"
+        >
+          <div class="w-8 h-8 rounded-full border-2 border-dashed border-current flex items-center justify-center">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </div>
+          <span class="text-[10px] font-semibold mt-1.5">Añadir</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Hospedados ahora -->
+    <section>
+      <h2 class="text-text-main font-semibold text-sm mb-2.5">Hospedados ahora</h2>
+      <div class="space-y-2">
+        <div class="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-secondary text-primary flex items-center justify-center text-xs font-semibold shrink-0">MR</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-text-main text-sm font-medium truncate">María Rodríguez</p>
+            <p class="text-text-muted text-xs truncate">Dúplex A · sale 15/07</p>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-semibold uppercase tracking-wide">Activo</span>
+        </div>
+        <div class="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-secondary text-primary flex items-center justify-center text-xs font-semibold shrink-0">JC</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-text-main text-sm font-medium truncate">Juan Carlos Pérez</p>
+            <p class="text-text-muted text-xs truncate">Dúplex B · sale 18/07</p>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-semibold uppercase tracking-wide">Activo</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Próximos inquilinos -->
+    <section>
+      <h2 class="text-text-main font-semibold text-sm mb-2.5">Próximos inquilinos</h2>
+      <div class="space-y-2">
+        <div class="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-secondary text-primary flex items-center justify-center text-xs font-semibold shrink-0">AL</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-text-main text-sm font-medium truncate">Ana López</p>
+            <p class="text-text-muted text-xs truncate">Dúplex A · ingresa 22/07</p>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-semibold uppercase tracking-wide">Confirmado</span>
+        </div>
+        <div class="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-secondary text-primary flex items-center justify-center text-xs font-semibold shrink-0">PG</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-text-main text-sm font-medium truncate">Pedro García</p>
+            <p class="text-text-muted text-xs truncate">Dúplex C · ingresa 28/07</p>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-semibold uppercase tracking-wide">Próximo</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Textos rápidos -->
+    <section>
+      <div class="flex items-center justify-between mb-2.5">
+        <h2 class="text-text-main font-semibold text-sm">Textos rápidos</h2>
+        <button class="inline-flex items-center gap-1 h-8 px-3 rounded-full bg-secondary text-primary text-xs font-semibold hover:bg-primary hover:text-white transition-colors">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          Nuevo texto
+        </button>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-white rounded-xl p-3 shadow-sm relative">
+          <button
+            class="absolute top-2 right-2 w-6 h-6 rounded-md text-text-muted hover:text-primary hover:bg-secondary transition-colors flex items-center justify-center"
+            aria-label="Copiar"
+          >
+            <i data-lucide="copy" class="w-3 h-3"></i>
+          </button>
+          <p class="text-text-main text-sm font-semibold pr-6">Bienvenida</p>
+          <p class="text-text-muted text-[11px] mt-1 line-clamp-3 leading-relaxed">
+            ¡Hola! Te damos la bienvenida a nuestro dúplex. Acá vas a encontrar todo lo que necesitás para una estadía perfecta.
+          </p>
+        </div>
+        <div class="bg-white rounded-xl p-3 shadow-sm relative">
+          <button
+            class="absolute top-2 right-2 w-6 h-6 rounded-md text-text-muted hover:text-primary hover:bg-secondary transition-colors flex items-center justify-center"
+            aria-label="Copiar"
+          >
+            <i data-lucide="copy" class="w-3 h-3"></i>
+          </button>
+          <p class="text-text-main text-sm font-semibold pr-6">WiFi</p>
+          <p class="text-text-muted text-[11px] mt-1 line-clamp-3 leading-relaxed">
+            Red: Duples_5G · Contraseña: costa1234 · Repetidor en living.
+          </p>
+        </div>
+        <div class="bg-white rounded-xl p-3 shadow-sm relative">
+          <button
+            class="absolute top-2 right-2 w-6 h-6 rounded-md text-text-muted hover:text-primary hover:bg-secondary transition-colors flex items-center justify-center"
+            aria-label="Copiar"
+          >
+            <i data-lucide="copy" class="w-3 h-3"></i>
+          </button>
+          <p class="text-text-main text-sm font-semibold pr-6">Check-out</p>
+          <p class="text-text-muted text-[11px] mt-1 line-clamp-3 leading-relaxed">
+            El check-out es a las 10:00 hs. Dejá las llaves en la caja fuerte de la entrada.
+          </p>
+        </div>
+        <div class="bg-white rounded-xl p-3 shadow-sm relative">
+          <button
+            class="absolute top-2 right-2 w-6 h-6 rounded-md text-text-muted hover:text-primary hover:bg-secondary transition-colors flex items-center justify-center"
+            aria-label="Copiar"
+          >
+            <i data-lucide="copy" class="w-3 h-3"></i>
+          </button>
+          <p class="text-text-main text-sm font-semibold pr-6">Gracias</p>
+          <p class="text-text-muted text-[11px] mt-1 line-clamp-3 leading-relaxed">
+            Gracias por elegirnos. Esperamos que hayas disfrutado tu estadía. ¡Te esperamos pronto!
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom nav -->
+  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
+    <div class="max-w-md mx-auto flex justify-around items-center h-16">
+      <button class="flex flex-col items-center justify-center gap-0.5 w-full h-full">
+        <i data-lucide="home" class="w-6 h-6 text-primary"></i>
+        <span class="text-[10px] text-primary font-medium">Control</span>
+      </button>
+      <button class="flex flex-col items-center justify-center gap-0.5 w-full h-full">
+        <i data-lucide="users" class="w-6 h-6 text-text-muted"></i>
+        <span class="text-[10px] text-text-muted">Clientes</span>
+      </button>
+      <button class="flex flex-col items-center justify-center gap-0.5 w-full h-full">
+        <i data-lucide="calendar-days" class="w-6 h-6 text-text-muted"></i>
+        <span class="text-[10px] text-text-muted">Calendario</span>
+      </button>
+      <button class="flex flex-col items-center justify-center gap-0.5 w-full h-full">
+        <i data-lucide="file-text" class="w-6 h-6 text-text-muted"></i>
+        <span class="text-[10px] text-text-muted">Alquileres</span>
+      </button>
+      <button class="flex flex-col items-center justify-center gap-0.5 w-full h-full">
+        <i data-lucide="receipt-text" class="w-6 h-6 text-text-muted"></i>
+        <span class="text-[10px] text-text-muted">Gastos</span>
+      </button>
+    </div>
+  </nav>
+
+  <script>lucide.createIcons()</script>
+</body>
+</html>

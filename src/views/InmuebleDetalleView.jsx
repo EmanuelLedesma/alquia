@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Image as ImageIcon, X, Copy, Trash2, Plus } from 'lucide-react'
+import { ArrowLeft, Image as ImageIcon, X, Copy, Trash2, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { supabase } from '../services/supabase'
 import YearGallery from '../components/calendar/YearGallery'
+
+function formatCurrency(n) {
+  return '$' + Number(n || 0).toLocaleString('es-AR')
+}
 
 export default function InmuebleDetalleView() {
   const { id } = useParams()
@@ -11,8 +15,7 @@ export default function InmuebleDetalleView() {
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
   const [uploading, setUploading] = useState(false)
-  const [preview, setPreview] = useState(null)
-  const [selectedFile, setSelectedFile] = useState(null)
+  const [photoIdx, setPhotoIdx] = useState(0)
   const fileInputRef = useRef(null)
 
   const [templates, setTemplates] = useState(() => {
@@ -42,49 +45,39 @@ export default function InmuebleDetalleView() {
       })
   }, [id])
 
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setSelectedFile(file)
-    setPreview(URL.createObjectURL(file))
-    uploadPhoto(file)
-  }
-
-  const uploadPhoto = async (file) => {
+  async function uploadAndAppend(file) {
     setUploading(true)
     setErrorMsg('')
-
     try {
       const ext = file.name.split('.').pop()
       const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
       const { error: uploadError } = await supabase.storage
         .from('fotos-inmuebles')
         .upload(fileName, file)
-
       if (uploadError) throw new Error(uploadError.message)
-
       const { data: publicUrlData } = supabase.storage
         .from('fotos-inmuebles')
         .getPublicUrl(fileName)
-
       const newUrl = publicUrlData.publicUrl
-
+      const prev = inmueble.fotos_urls || []
+      const next = prev.concat([newUrl])
       const { error: updateError } = await supabase
         .from('inmuebles')
-        .update({ fotos_urls: [newUrl] })
+        .update({ fotos_urls: next })
         .eq('id', id)
-
       if (updateError) throw new Error(updateError.message)
-
-      setInmueble((prev) => ({ ...prev, fotos_urls: [newUrl] }))
-      setPreview(null)
-      setSelectedFile(null)
+      setInmueble((p) => ({ ...p, fotos_urls: next }))
+      setPhotoIdx(next.length - 1)
     } catch (err) {
       setErrorMsg(err.message)
     }
-
     setUploading(false)
+  }
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    uploadAndAppend(file)
   }
 
   const showToast = (msg) => {
@@ -110,8 +103,8 @@ export default function InmuebleDetalleView() {
     navigator.clipboard.writeText(content).then(() => showToast('¡Copiado!'))
   }
 
-  const handleDeleteTemplate = (id) => {
-    setTemplates((prev) => prev.filter((t) => t.id !== id))
+  const handleDeleteTemplate = (tid) => {
+    setTemplates((prev) => prev.filter((t) => t.id !== tid))
   }
 
   if (loading) {
@@ -137,25 +130,56 @@ export default function InmuebleDetalleView() {
     )
   }
 
-  const currentPhoto = preview || inmueble.fotos_urls?.[0]
+  const fotos = inmueble.fotos_urls || []
+  const hasRecambio = Number(inmueble.costo_recambio) > 0
 
   return (
     <div className="p-4 space-y-4">
       <button
         onClick={() => navigate(-1)}
-        className="inline-flex items-center gap-1 text-sm text-primary"
+        className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-primary"
       >
         <ArrowLeft className="w-4 h-4" />
-        Volver
+        Panel
       </button>
 
       <div className="relative">
-        {currentPhoto ? (
-          <img
-            src={currentPhoto}
-            alt={inmueble.nombre}
-            className="aspect-video w-full object-cover rounded-xl bg-slate-100"
-          />
+        {fotos.length > 0 ? (
+          <>
+            <img
+              src={fotos[photoIdx]}
+              alt={inmueble.nombre}
+              className="aspect-video w-full object-cover rounded-xl bg-slate-100"
+            />
+            {fotos.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setPhotoIdx((i) => (i - 1 + fotos.length) % fotos.length)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPhotoIdx((i) => (i + 1) % fotos.length)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {fotos.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setPhotoIdx(i)}
+                      className={'w-1.5 h-1.5 rounded-full ' + (i === photoIdx ? 'bg-white' : 'bg-white/50')}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
         ) : (
           <div className="aspect-video w-full bg-slate-200 rounded-xl flex items-center justify-center">
             <ImageIcon className="w-12 h-12 text-slate-400" />
@@ -175,17 +199,8 @@ export default function InmuebleDetalleView() {
           disabled={uploading}
           className="absolute bottom-3 right-3 h-10 px-4 rounded-xl bg-black/60 text-white text-sm font-medium backdrop-blur-sm disabled:opacity-50"
         >
-          {uploading ? 'Subiendo…' : 'Cambiar foto'}
+          {uploading ? 'Subiendo…' : fotos.length > 0 ? 'Agregar foto' : 'Subir foto'}
         </button>
-
-        {preview && (
-          <button
-            onClick={() => { setPreview(null); setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
-            className="absolute top-3 right-3 bg-black/50 text-white rounded-full p-1.5"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
       </div>
 
       {errorMsg && (
@@ -196,6 +211,17 @@ export default function InmuebleDetalleView() {
 
       <div className="space-y-3">
         <h1 className="text-text-main text-xl font-bold">{inmueble.nombre}</h1>
+
+        <div className="flex flex-wrap gap-2">
+          <div className="inline-flex items-center gap-2 h-9 px-3 rounded-full bg-secondary text-primary text-xs font-semibold">
+            <span>Recambio:</span>
+            <span className="tabular-nums">{formatCurrency(inmueble.costo_recambio)}</span>
+          </div>
+          <div className="inline-flex items-center gap-2 h-9 px-3 rounded-full bg-surface border border-slate-200 text-text-muted text-xs font-medium">
+            <ImageIcon className="w-3.5 h-3.5" />
+            {fotos.length} {fotos.length === 1 ? 'foto' : 'fotos'}
+          </div>
+        </div>
 
         {inmueble.descripcion && (
           <p className="text-text-muted leading-relaxed">{inmueble.descripcion}</p>
@@ -215,7 +241,6 @@ export default function InmuebleDetalleView() {
 
       <YearGallery inmuebleId={Number(id)} compact />
 
-      {/* Textos Pre-armados */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-text-main font-semibold">Textos Pre-armados</h2>
@@ -257,14 +282,12 @@ export default function InmuebleDetalleView() {
         </div>
       </div>
 
-      {/* Toast */}
       {toast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[9999] bg-gray-900 text-white px-4 py-2 rounded-lg text-sm shadow-lg">
           {toast}
         </div>
       )}
 
-      {/* Modal nuevo texto */}
       {templateModalOpen && (
         <div className="fixed inset-0 z-[9999] bg-gray-900/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[85vh] flex flex-col">

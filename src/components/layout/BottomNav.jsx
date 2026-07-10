@@ -3,7 +3,7 @@ import { Home, Users, CalendarDays, FileText, ReceiptText } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 const navItems = [
-  { label: 'Inmuebles', path: '/', icon: Home },
+  { label: 'Control', path: '/', icon: Home },
   { label: 'Clientes', path: '/clientes', icon: Users },
   { label: 'Calendario', path: '/calendario', icon: CalendarDays },
   { label: 'Alquileres', path: '/alquileres', icon: FileText },
