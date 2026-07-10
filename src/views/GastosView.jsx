@@ -171,6 +171,7 @@ export default function GastosView() {
       monto: g.monto,
       fecha: g.fecha,
       descripcion: g.concepto,
+      categoria: g.categoria || '',
       inmueble: g.inmuebles?.nombre || '',
     })
   }
@@ -336,6 +337,7 @@ export default function GastosView() {
                 <tr className="border-b border-slate-200">
                   <th className="text-left text-text-muted font-medium px-4 py-3">Fecha</th>
                   <th className="text-left text-text-muted font-medium px-4 py-3">Descripci&oacute;n</th>
+                  <th className="text-left text-text-muted font-medium px-4 py-3 hidden sm:table-cell">Categor&iacute;a</th>
                   <th className="text-center text-text-muted font-medium px-4 py-3">Tipo</th>
                   <th className="text-right text-text-muted font-medium px-4 py-3">Monto</th>
                 </tr>
@@ -343,7 +345,7 @@ export default function GastosView() {
               <tbody>
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="text-center text-text-muted py-8">No hay movimientos en este per&iacute;odo.</td>
+                    <td colSpan={5} className="text-center text-text-muted py-8">No hay movimientos en este per&iacute;odo.</td>
                   </tr>
                 )}
                 {filtered.map(function (t) {
@@ -355,6 +357,7 @@ export default function GastosView() {
                         <div className="font-medium">{t.descripcion}</div>
                         {t.inmueble && <div className="text-[11px] text-text-muted">{t.inmueble}</div>}
                       </td>
+                      <td className="px-4 py-3 text-text-muted text-xs hidden sm:table-cell">{t.categoria || '—'}</td>
                       <td className="px-4 py-3 text-center">
                         <span className={'inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ' + (esIngreso ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600')}>
                           {t.tipo}

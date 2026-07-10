@@ -7,7 +7,7 @@ import {
   Calendar as CalendarIcon,
 } from 'lucide-react'
 import { supabase } from '../services/supabase'
-import { diasEntre, displayToIso, formatDateInput } from '../lib/utils'
+import { diasEntre } from '../lib/utils'
 
 function formatCurrency(n) {
   return '$' + Number(n || 0).toLocaleString('es-AR')
@@ -214,9 +214,8 @@ export default function PanelControlView() {
   const [clienteError, setClienteError] = useState('')
 
   const [gastoModalOpen, setGastoModalOpen] = useState(false)
-  const [gastoTipo, setGastoTipo] = useState('gasto')
   const [gastoForm, setGastoForm] = useState({
-    inmuebleId: '', concepto: '', alquilerId: '', monto: '', fecha: '',
+    concepto: '', categoria: 'Mantenimiento', monto: '', fecha: '',
   })
   const [gastoSubmitting, setGastoSubmitting] = useState(false)
   const [gastoError, setGastoError] = useState('')
@@ -407,8 +406,7 @@ export default function PanelControlView() {
   }
 
   function openGastoModal() {
-    setGastoTipo('gasto')
-    setGastoForm({ inmuebleId: '', concepto: '', alquilerId: '', monto: '', fecha: '' })
+    setGastoForm({ concepto: '', categoria: 'Mantenimiento', monto: '', fecha: new Date().toISOString().split('T')[0] })
     setGastoError('')
     setGastoModalOpen(true)
   }
@@ -423,56 +421,27 @@ export default function PanelControlView() {
     setGastoError('')
     try {
       var montoNum = Number(gastoForm.monto.replace(/\D/g, ''))
-      var isoFecha = displayToIso(gastoForm.fecha)
       if (!montoNum) throw new Error('Ingresá un monto válido.')
-      if (!isoFecha) throw new Error('Ingresá una fecha completa (dd/mm/aa).')
+      if (!gastoForm.concepto.trim()) throw new Error('Ingresá una descripción.')
+      if (!gastoForm.fecha) throw new Error('Ingresá una fecha.')
 
-      if (gastoTipo === 'gasto') {
-        if (!gastoForm.concepto.trim()) throw new Error('Ingresá un concepto.')
-        var anioTemp = Number(isoFecha.split('-')[0])
-        var data = {
-          concepto: gastoForm.concepto.trim(),
-          monto: montoNum,
-          fecha: isoFecha,
-          anio_temporada: anioTemp,
-        }
-        if (gastoForm.inmuebleId) data.inmueble_id = Number(gastoForm.inmuebleId)
-        var res = await supabase.from('gastos').insert(data).select().single()
-        if (res.error) throw new Error(res.error.message)
-        var inm = inmuebles.find(function (i) { return i.id === Number(gastoForm.inmuebleId) })
-        setGastos(function (prev) { return [{
-          id: res.data.id,
-          concepto: data.concepto,
-          monto: montoNum,
-          fecha: isoFecha,
-          anio_temporada: anioTemp,
-          inmueble_id: data.inmueble_id,
-          inmuebles: inm ? { nombre: inm.nombre } : null,
-        }].concat(prev) })
-      } else {
-        if (!gastoForm.alquilerId) throw new Error('Seleccioná un alquiler.')
-        var alqSel = alquileres.find(function (a) { return a.id === Number(gastoForm.alquilerId) })
-        if (!alqSel) throw new Error('Alquiler inválido.')
-        var senasActuales = Number(alqSel.total_senas_recibidas || 0)
-        var nuevoTotal = senasActuales + montoNum
-        var senaRes = await supabase.from('senas').insert({
-          alquiler_id: Number(gastoForm.alquilerId),
-          monto: montoNum,
-          fecha: isoFecha,
-        }).select().single()
-        if (senaRes.error) throw new Error(senaRes.error.message)
-        await supabase.from('alquileres').update({ total_senas_recibidas: nuevoTotal }).eq('id', alqSel.id)
-        setSenas(function (prev) { return [{
-          id: senaRes.data.id,
-          alquiler_id: alqSel.id,
-          monto: montoNum,
-          fecha: isoFecha,
-          alquileres: alqSel,
-        }].concat(prev) })
-        setAlquileres(function (prev) {
-          return prev.map(function (a) { return a.id === alqSel.id ? Object.assign({}, a, { total_senas_recibidas: nuevoTotal }) : a })
-        })
-      }
+      var anioTemp = Number(gastoForm.fecha.split('-')[0])
+      var res = await supabase.from('gastos').insert({
+        concepto: gastoForm.concepto.trim(),
+        categoria: gastoForm.categoria,
+        monto: montoNum,
+        fecha: gastoForm.fecha,
+        anio_temporada: anioTemp,
+      }).select().single()
+      if (res.error) throw new Error(res.error.message)
+      setGastos(function (prev) { return [{
+        id: res.data.id,
+        concepto: res.data.concepto,
+        categoria: res.data.categoria,
+        monto: montoNum,
+        fecha: res.data.fecha,
+        anio_temporada: anioTemp,
+      }].concat(prev) })
       setGastoModalOpen(false)
     } catch (err) {
       setGastoError(err.message)
@@ -1232,85 +1201,81 @@ export default function PanelControlView() {
       )}
 
       {gastoModalOpen && createPortal(
-        <div className="fixed inset-0 z-[9999] bg-gray-900/50 flex items-center justify-center p-4" onClick={function (e) { if (e.target === e.currentTarget) setGastoModalOpen(false) }}>
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200">
-              <h2 className="text-text-main font-semibold text-lg">Nuevo Movimiento</h2>
-              <button onClick={function () { setGastoModalOpen(false) }} className="text-text-muted">
+        <div className="fixed inset-0 z-[9999] bg-black/40 flex items-center justify-center p-4" onClick={function (e) { if (e.target === e.currentTarget) setGastoModalOpen(false) }}>
+          <div className="bg-white rounded-2xl shadow-lg w-full max-w-sm flex flex-col">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3">
+              <h2 className="text-text-main font-bold text-base">Nuevo gasto</h2>
+              <button onClick={function () { setGastoModalOpen(false) }} className="text-text-muted hover:text-text-main transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="overflow-y-auto p-4 space-y-4">
+            <hr className="border-t border-slate-200 mx-5" />
+            <div className="px-5 pt-4 pb-5">
               <form id="gasto-form" onSubmit={submitGasto} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm text-text-muted font-medium">Tipo</label>
-                  <select value={gastoTipo} onChange={function (e) { setGastoTipo(e.target.value) }} className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none">
-                    <option value="gasto">Gasto</option>
-                    <option value="ingreso">Ingreso (seña)</option>
-                  </select>
-                </div>
-
-                {gastoTipo === 'gasto' ? (
-                  <>
-                    <div className="space-y-1.5">
-                      <label className="text-sm text-text-muted font-medium">Inmueble</label>
-                      <select value={gastoForm.inmuebleId} onChange={function (e) { changeGasto('inmuebleId', e.target.value) }} className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none">
-                        <option value="">Sin especificar</option>
-                        {inmuebles.map(function (i) {
-                          return <option key={i.id} value={i.id}>{i.nombre}</option>
-                        })}
-                      </select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-sm text-text-muted font-medium">Concepto</label>
-                      <input type="text" required value={gastoForm.concepto} onChange={function (e) { changeGasto('concepto', e.target.value) }} placeholder="Ej. Reparación termotanque" className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm" />
-                    </div>
-                  </>
-                ) : (
-                  <div className="space-y-1.5">
-                    <label className="text-sm text-text-muted font-medium">Alquiler</label>
-                    <select required value={gastoForm.alquilerId} onChange={function (e) { changeGasto('alquilerId', e.target.value) }} className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none">
-                      <option value="">Seleccionar alquiler</option>
-                      {alquileres.map(function (a) {
-                        var c = a.clientes || {}
-                        return <option key={a.id} value={a.id}>{(c.nombre || '') + ' ' + (c.apellido || '') + ' — ' + (a.inmuebles ? a.inmuebles.nombre : '')}</option>
-                      })}
-                    </select>
-                  </div>
-                )}
-
-                <div className="space-y-1.5">
-                  <label className="text-sm text-text-muted font-medium">Monto</label>
+                <div className="space-y-1">
+                  <label className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Descripción</label>
                   <input
                     type="text"
-                    inputMode="numeric"
                     required
-                    value={gastoForm.monto}
-                    onChange={function (e) { changeGasto('monto', e.target.value.replace(/\D/g, '')) }}
-                    placeholder="0"
-                    className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
+                    value={gastoForm.concepto}
+                    onChange={function (e) { changeGasto('concepto', e.target.value) }}
+                    placeholder="Reparación, limpieza, gas..."
+                    className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-text-main text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-sm text-text-muted font-medium">Fecha</label>
+                <div className="space-y-1">
+                  <label className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Categoría</label>
+                  <select
+                    value={gastoForm.categoria}
+                    onChange={function (e) { changeGasto('categoria', e.target.value) }}
+                    className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-text-main text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  >
+                    <option value="Mantenimiento">Mantenimiento</option>
+                    <option value="Limpieza">Limpieza</option>
+                    <option value="Servicios">Servicios</option>
+                    <option value="Impuestos">Impuestos</option>
+                    <option value="Otros">Otros</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Monto</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      required
+                      value={gastoForm.monto}
+                      onChange={function (e) { changeGasto('monto', e.target.value.replace(/\D/g, '')) }}
+                      placeholder="0"
+                      className="w-full h-10 pl-7 pr-3 rounded-lg border border-gray-200 bg-white text-text-main text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Fecha</label>
                   <input
-                    type="text"
-                    inputMode="numeric"
+                    type="date"
                     required
                     value={gastoForm.fecha}
-                    onChange={function (e) { changeGasto('fecha', formatDateInput(e.target.value)) }}
-                    placeholder="dd/mm/aa"
-                    maxLength="8"
-                    className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
+                    onChange={function (e) { changeGasto('fecha', e.target.value) }}
+                    className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-text-main text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
                 </div>
               </form>
             </div>
-            <div className="p-4 border-t border-slate-200 space-y-2">
-              {gastoError && <p className="text-sm text-red-500 text-center">{gastoError}</p>}
-              <button type="submit" form="gasto-form" disabled={gastoSubmitting} className="w-full h-11 rounded-xl bg-primary text-white text-sm font-medium disabled:opacity-50">
-                {gastoSubmitting ? 'Guardando…' : (gastoTipo === 'gasto' ? 'Registrar Gasto' : 'Registrar Ingreso')}
+            <div className="px-5 pb-5 space-y-2">
+              {gastoError && <p className="text-xs text-red-500 text-center">{gastoError}</p>}
+              <button
+                type="submit"
+                form="gasto-form"
+                disabled={gastoSubmitting}
+                className="w-full h-11 rounded-xl bg-[#a8d8ea] text-white text-sm font-semibold disabled:opacity-50 hover:brightness-95 transition-all"
+              >
+                {gastoSubmitting ? 'Guardando…' : 'Registrar gasto'}
               </button>
             </div>
           </div>
