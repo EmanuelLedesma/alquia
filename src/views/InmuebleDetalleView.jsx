@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Image as ImageIcon, X, Copy, Trash2, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Image as ImageIcon, X, Copy, Trash2, Plus, ChevronLeft, ChevronRight, FileText, Download, Link as LinkIcon } from 'lucide-react'
 import { supabase } from '../services/supabase'
 import YearGallery from '../components/calendar/YearGallery'
 
@@ -26,6 +26,11 @@ export default function InmuebleDetalleView() {
   const [templateForm, setTemplateForm] = useState({ title: '', content: '' })
   const [templateSubmitting, setTemplateSubmitting] = useState(false)
   const [toast, setToast] = useState(null)
+  const [documentos, setDocumentos] = useState([])
+  const [subiendoDoc, setSubiendoDoc] = useState(false)
+  const docInputRef = useRef(null)
+  var STORAGE_BUCKET = 'documentos'
+  var STORAGE_PREFIX = 'inmueble-' + id + '/'
 
   useEffect(() => {
     if (id) {
@@ -44,6 +49,55 @@ export default function InmuebleDetalleView() {
         setLoading(false)
       })
   }, [id])
+
+  useEffect(function () {
+    if (!id) return
+    supabase.storage.from(STORAGE_BUCKET).list(STORAGE_PREFIX).then(function (r) {
+      if (r.data) setDocumentos(r.data)
+    })
+  }, [id])
+
+  function formatBytes(bytes) {
+    if (!bytes) return ''
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / 1048576).toFixed(1) + ' MB'
+  }
+
+  function nombreOriginal(fileName) {
+    return fileName.substring(37)
+  }
+
+  function urlDocumento(fileName) {
+    return supabase.storage.from(STORAGE_BUCKET).getPublicUrl(STORAGE_PREFIX + fileName).data.publicUrl
+  }
+
+  function copiarLinkDocumento(fileName) {
+    var url = urlDocumento(fileName)
+    navigator.clipboard.writeText(url).then(function () { showToast('Link copiado') })
+  }
+
+  function eliminarDocumento(fileName) {
+    if (!confirm('¿Eliminar este archivo?')) return
+    supabase.storage.from(STORAGE_BUCKET).remove([STORAGE_PREFIX + fileName]).then(function () {
+      setDocumentos(function (prev) { return prev.filter(function (x) { return x.name !== fileName }) })
+    })
+  }
+
+  function subirDocumento(e) {
+    var file = e.target.files?.[0]
+    if (!file) return
+    setSubiendoDoc(true)
+    var uuid = crypto.randomUUID()
+    var path = STORAGE_PREFIX + uuid + '-' + file.name
+    supabase.storage.from(STORAGE_BUCKET).upload(path, file).then(function (res) {
+      if (res.error) { setErrorMsg(res.error.message); setSubiendoDoc(false); return }
+      return supabase.storage.from(STORAGE_BUCKET).list(STORAGE_PREFIX)
+    }).then(function (r) {
+      if (r && r.data) setDocumentos(r.data)
+      setSubiendoDoc(false)
+    })
+  }
 
   async function uploadAndAppend(file) {
     setUploading(true)
@@ -279,6 +333,52 @@ export default function InmuebleDetalleView() {
               </button>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-text-main font-semibold">Documentos</h2>
+          <button
+            onClick={() => docInputRef.current?.click()}
+            disabled={subiendoDoc}
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-primary text-white text-xs font-medium disabled:opacity-50"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            {subiendoDoc ? 'Subiendo…' : 'Subir archivo'}
+          </button>
+          <input ref={docInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" onChange={subirDocumento} className="hidden" />
+        </div>
+
+        {documentos.length === 0 && (
+          <p className="text-text-muted text-sm">Subí PDF, Word o Excel para compartir por WhatsApp.</p>
+        )}
+
+        <div className="space-y-2">
+          {documentos.map(function (f) {
+            var url = urlDocumento(f.name)
+            return (
+              <div key={f.name} className="flex items-center gap-3 bg-surface rounded-xl shadow-sm p-3">
+                <FileText className="w-8 h-8 shrink-0 text-primary opacity-60" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-text-main text-sm font-medium truncate">{nombreOriginal(f.name)}</p>
+                  <p className="text-text-muted text-[11px]">{formatBytes(f.metadata?.size)}</p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button onClick={() => copiarLinkDocumento(f.name)} className="h-8 px-2 rounded-lg text-primary hover:bg-secondary text-xs font-medium inline-flex items-center gap-1">
+                    <LinkIcon className="w-3 h-3" />
+                    Link
+                  </button>
+                  <a href={url} target="_blank" rel="noreferrer" className="h-8 px-2 rounded-lg text-text-muted hover:bg-secondary text-xs font-medium inline-flex items-center gap-1">
+                    <Download className="w-3 h-3" />
+                  </a>
+                  <button onClick={() => eliminarDocumento(f.name)} className="h-8 w-8 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 inline-flex items-center justify-center">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
