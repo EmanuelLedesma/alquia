@@ -135,14 +135,6 @@ export default function AlquileresView() {
       fecha: today,
     }).then(function (senasRes) {
       if (!senasRes.error) {
-        supabase.from('gastos').insert({
-          concepto: 'Alquiler #' + a.id + ' — ' + (a.clientes?.nombre || '') + ' ' + (a.clientes?.apellido || '') + ' (' + (a.inmuebles?.nombre || '') + ')',
-          categoria: 'alquiler',
-          monto: remaining,
-          fecha: today,
-          anio_temporada: Number(today.split('-')[0]),
-          inmueble_id: Number(a.inmueble_id),
-        }).then()
         supabase.from('alquileres').update({ total_senas_recibidas: total }).eq('id', a.id).then(function (res) {
           if (!res.error) {
             setAlquileres(function (prev) {
@@ -182,14 +174,6 @@ export default function AlquileresView() {
     }).then(function (senasRes) {
       if (!senasRes.error) {
         var finalTotal = esPagado ? total : nuevoTotal
-        supabase.from('gastos').insert({
-          concepto: 'Alquiler #' + a.id + ' — ' + (a.clientes?.nombre || '') + ' ' + (a.clientes?.apellido || '') + ' (' + (a.inmuebles?.nombre || '') + ')',
-          categoria: 'alquiler',
-          monto: monto,
-          fecha: today,
-          anio_temporada: Number(today.split('-')[0]),
-          inmueble_id: Number(a.inmueble_id),
-        }).then()
         supabase.from('alquileres').update({ total_senas_recibidas: finalTotal }).eq('id', a.id).then(function (res) {
           if (!res.error) {
             setAlquileres(function (prev) {
@@ -221,14 +205,6 @@ export default function AlquileresView() {
     supabase.from('senas').delete().eq('alquiler_id', a.id).then(function () {
       if (finalTotal > 0) {
         var today = new Date().toISOString().split('T')[0]
-        supabase.from('gastos').insert({
-          concepto: 'Alquiler #' + a.id + ' — ' + (a.clientes?.nombre || '') + ' ' + (a.clientes?.apellido || '') + ' (' + (a.inmuebles?.nombre || '') + ')',
-          categoria: 'alquiler',
-          monto: finalTotal,
-          fecha: today,
-          anio_temporada: Number(today.split('-')[0]),
-          inmueble_id: Number(a.inmueble_id),
-        }).then()
         return supabase.from('senas').insert({
           alquiler_id: a.id,
           monto: finalTotal,

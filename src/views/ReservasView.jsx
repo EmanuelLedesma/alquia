@@ -105,7 +105,7 @@ export default function ReservasView() {
   var [checking, setChecking] = useState(false)
   var [submitting, setSubmitting] = useState(false)
 
-  var dias = diasEntre(fechaDesde, fechaHasta)
+  var dias = diasEntre(fechaDesde, fechaHasta) + 1
   var pStr = precioPorDia === '' ? '' : String(Number(precioPorDia))
   var cStr = costoRecambio === '' ? '' : String(Number(costoRecambio))
   var pNum = pStr === '' ? 0 : Number(pStr)
@@ -154,7 +154,7 @@ export default function ReservasView() {
       return
     }
 
-    var nuevaHasta = addDays(fechaDesde, days)
+    var nuevaHasta = addDays(fechaDesde, days - 1)
 
     if (nuevaHasta <= fechaDesde) {
       setOverlapError({ message: 'La fecha de fin debe ser posterior a la de inicio.' })

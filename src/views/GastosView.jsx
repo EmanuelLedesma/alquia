@@ -187,6 +187,7 @@ export default function GastosView() {
       monto: s.monto,
       fecha: s.fecha,
       descripcion: (nombreCliente.trim() || 'Seña') + (alq.inmuebles?.nombre ? ' — ' + alq.inmuebles.nombre : ''),
+      categoria: 'alquiler',
       inmueble: alq.inmuebles?.nombre || '',
     })
   }
