@@ -39,6 +39,16 @@ Actualiza este archivo después de cada cambio significativo de implementación.
 ## En Progreso
 - Ninguno.
 
+## Fixes Aplicados
+- `ReservasView.jsx`:
+  - Se definió `inmuebleNombre` como variable derivada (antes causaba `ReferenceError` al crear gasto de recambio, bloqueando navegación y dejando botón habilitado → duplicación de reservas).
+  - Se agregó estado `submitting` con guard clause en `handleSubmit`, botón deshabilitado mientras envía, y texto "Guardando...".
+  - Se desacopló la navegación de la inserción de gastos: `navigate('/calendario')` ocurre siempre que el alquiler se creó, sin esperar el gasto de recambio.
+  - Navegación post-guardado cambió de `/reservas/:id` a `/calendario` (último lugar visitado).
+- `AlquileresView.jsx`:
+  - Columnas Seña y Total invertidas en tabla y en `tfoot`.
+  - `handlePagado`, `handleAgregarSena`, `handleEditarTotal`: ahora insertan en `gastos` con `categoria: 'alquiler'`.
+
 ## Próximo a Hacer
 1. [Unidad 14] Limpieza de lib compartida — ver `context/specs/14-lib-cleanup.md`.
 2. [Unidad 15] PWA básica — ver `context/specs/15-pwa-basics.md`.

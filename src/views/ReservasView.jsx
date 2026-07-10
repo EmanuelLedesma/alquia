@@ -103,6 +103,7 @@ export default function ReservasView() {
   var [overlapError, setOverlapError] = useState(null)
   var [submitError, setSubmitError] = useState('')
   var [checking, setChecking] = useState(false)
+  var [submitting, setSubmitting] = useState(false)
 
   var dias = diasEntre(fechaDesde, fechaHasta)
   var pStr = precioPorDia === '' ? '' : String(Number(precioPorDia))
@@ -110,6 +111,7 @@ export default function ReservasView() {
   var pNum = pStr === '' ? 0 : Number(pStr)
   var cNum = cStr === '' ? 0 : Number(cStr)
   var total = dias * pNum - cNum
+  var inmuebleNombre = (function () { var i = inmuebles.find(function (x) { return String(x.id) === String(inmuebleId) }); return i ? i.nombre : '' })()
 
   useEffect(function () {
     var stateFecha = location.state && location.state.fechaDesde
@@ -194,6 +196,7 @@ export default function ReservasView() {
 
   function handleSubmit(e) {
     e.preventDefault()
+    if (submitting) return
     setSubmitError('')
 
     var faltantes = []
@@ -206,6 +209,7 @@ export default function ReservasView() {
       return
     }
 
+    setSubmitting(true)
     supabase.from('alquileres').insert({
       inmueble_id: Number(inmuebleId),
       cliente_id: Number(clienteId),
@@ -218,23 +222,21 @@ export default function ReservasView() {
       monto_total: total,
       total_senas_recibidas: 0,
     }).select().single().then(function (res) {
+      setSubmitting(false)
       if (res.error) {
         setSubmitError(res.error.message)
         return
       }
-      if (res.data && cNum > 0) {
+      if (cNum > 0) {
         supabase.from('gastos').insert({
           concepto: 'Recambio - ' + (inmuebleNombre || '') + ' (alquiler #' + res.data.id + ')',
           monto: cNum,
           fecha: fechaDesde,
           anio_temporada: Number(fechaDesde.split('-')[0]),
           inmueble_id: Number(inmuebleId),
-        }).then(function () {
-          navigate('/reservas/' + res.data.id, { replace: true })
-        })
-      } else if (res.data) {
-        navigate('/reservas/' + res.data.id, { replace: true })
+        }).then()
       }
+      navigate('/calendario')
     })
   }
 
@@ -425,9 +427,10 @@ export default function ReservasView() {
 
         <button
           type="submit"
-          className="w-full h-11 rounded-xl bg-primary text-white text-sm font-medium"
+          disabled={submitting}
+          className={"w-full h-11 rounded-xl text-white text-sm font-medium " + (submitting ? "bg-primary/50 cursor-not-allowed" : "bg-primary")}
         >
-          Guardar Reserva
+          {submitting ? 'Guardando...' : 'Guardar Reserva'}
         </button>
       </form>
     </div>

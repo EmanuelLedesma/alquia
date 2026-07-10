@@ -135,6 +135,14 @@ export default function AlquileresView() {
       fecha: today,
     }).then(function (senasRes) {
       if (!senasRes.error) {
+        supabase.from('gastos').insert({
+          concepto: 'Alquiler #' + a.id + ' — ' + (a.clientes?.nombre || '') + ' ' + (a.clientes?.apellido || '') + ' (' + (a.inmuebles?.nombre || '') + ')',
+          categoria: 'alquiler',
+          monto: remaining,
+          fecha: today,
+          anio_temporada: Number(today.split('-')[0]),
+          inmueble_id: Number(a.inmueble_id),
+        }).then()
         supabase.from('alquileres').update({ total_senas_recibidas: total }).eq('id', a.id).then(function (res) {
           if (!res.error) {
             setAlquileres(function (prev) {
@@ -174,6 +182,14 @@ export default function AlquileresView() {
     }).then(function (senasRes) {
       if (!senasRes.error) {
         var finalTotal = esPagado ? total : nuevoTotal
+        supabase.from('gastos').insert({
+          concepto: 'Alquiler #' + a.id + ' — ' + (a.clientes?.nombre || '') + ' ' + (a.clientes?.apellido || '') + ' (' + (a.inmuebles?.nombre || '') + ')',
+          categoria: 'alquiler',
+          monto: monto,
+          fecha: today,
+          anio_temporada: Number(today.split('-')[0]),
+          inmueble_id: Number(a.inmueble_id),
+        }).then()
         supabase.from('alquileres').update({ total_senas_recibidas: finalTotal }).eq('id', a.id).then(function (res) {
           if (!res.error) {
             setAlquileres(function (prev) {
@@ -205,6 +221,14 @@ export default function AlquileresView() {
     supabase.from('senas').delete().eq('alquiler_id', a.id).then(function () {
       if (finalTotal > 0) {
         var today = new Date().toISOString().split('T')[0]
+        supabase.from('gastos').insert({
+          concepto: 'Alquiler #' + a.id + ' — ' + (a.clientes?.nombre || '') + ' ' + (a.clientes?.apellido || '') + ' (' + (a.inmuebles?.nombre || '') + ')',
+          categoria: 'alquiler',
+          monto: finalTotal,
+          fecha: today,
+          anio_temporada: Number(today.split('-')[0]),
+          inmueble_id: Number(a.inmueble_id),
+        }).then()
         return supabase.from('senas').insert({
           alquiler_id: a.id,
           monto: finalTotal,
@@ -359,8 +383,8 @@ export default function AlquileresView() {
               <th className="text-left text-text-muted font-medium px-4 py-3">Entrada</th>
               <th className="text-left text-text-muted font-medium px-4 py-3">Salida</th>
               <th className="text-center text-text-muted font-medium px-4 py-3">Días</th>
-              <th className="text-right text-text-muted font-medium px-4 py-3">Seña</th>
               <th className="text-right text-text-muted font-medium px-4 py-3">Total</th>
+              <th className="text-right text-text-muted font-medium px-4 py-3">Seña</th>
               <th className="text-right text-text-muted font-medium px-4 py-3">Resto</th>
               <th className="text-center text-text-muted font-medium px-4 py-3">Estado</th>
               <th className="w-10 px-2 py-3" />
@@ -407,11 +431,11 @@ export default function AlquileresView() {
                   <td className="px-4 py-3 text-center text-text-main font-medium tabular-nums">
                     {dias}
                   </td>
-                  <td className="px-4 py-3 text-right text-text-main font-medium">
-                    {senas > 0 ? formatCurrency(senas) : '—'}
-                  </td>
                   <td className="px-4 py-3 text-right">
                     <div className="text-text-main font-medium">{formatCurrency(total)}</div>
+                  </td>
+                  <td className="px-4 py-3 text-right text-text-main font-medium">
+                    {senas > 0 ? formatCurrency(senas) : '—'}
                   </td>
                   <td className={'px-4 py-3 text-right font-medium ' + (resto > 0 ? 'text-red-500' : 'text-text-main')}>
                     {resto > 0 ? formatCurrency(resto) : '—'}
@@ -458,8 +482,8 @@ export default function AlquileresView() {
                   <td className="px-4 py-3" />
                   <td className="px-4 py-3" />
                   <td className="px-4 py-3" />
-                  <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(sumSenas)}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(sumTotal)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(sumSenas)}</td>
                   <td className={'px-4 py-3 text-right tabular-nums ' + (sumResto > 0 ? 'text-red-300' : '')}>{formatCurrency(sumResto)}</td>
                   <td className="px-4 py-3" />
                   <td className="px-2 py-3" />
