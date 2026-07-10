@@ -3,70 +3,69 @@
 Actualiza este archivo después de cada cambio significativo de implementación.
 
 ## Fase Actual
-- Fase 2: Funcionalidad completa con datos reales (Supabase + Calendar + Fixes).
+- Fase 3: Estabilización (v0.1.1) + Roadmap v0.2.
 
 ## Objetivo Actual
-- Estabilizar formulario de Nueva Reserva: arreglar cálculo de días y total, codificación de textos, y edición de campos numéricos.
+- Unidad 13 completada. Próxima unidad de código: **Unidad 14 — Limpieza de lib compartida**.
 
 ## Completado
-- [Unidad 1] Inicialización y App Shell (Layout Base) — Completado.
+
+### Fase 1 — Esqueleto UI (Mock Data)
+- [Unidad 1] Inicialización y App Shell — Completado.
 - [Unidad 2] Vista de Inmuebles (UI Shell) — Completado.
 - [Unidad 3] Vista de Clientes y Prospectos (UI Shell) — Completado.
+
+### Fase 2 — Formularios y Lógica Financiera (Mock Data)
 - [Unidad 4] Formulario de Nueva Reserva (UI Shell) — Completado.
 - [Unidad 5] Panel de Gestión Contable (Reserva Individual) — Completado.
-- [Unidad 6] Vista de Gastos y Cierre Anual — Completado.
-- [Unidad 7] Integración con Supabase y Autenticación Básica — Completado.
-- [Unidad 8] Migración de Vistas a Datos Reales (Supabase) — Completado.
-- [Unidad 9] Calendario de disponibilidad + fixes de UX — En progreso.
+- [Unidad 6] Vista de Gastos y Cierre Anual (UI Shell) — Completado.
+
+### Fase 3 — Integración Backend
+- [Unidad 7] Integración con Supabase y Autenticación — Completado.
+- [Unidad 8] Migración de Vistas a Datos Reales — Completado.
+
+### Fase 4 — Funcionalidad Completa + UX
+- [Unidad 9] Calendario YearGallery + fixes de reservas (timezone, inputs, validación, Unicode) — Completado.
+- [Unidad 10] AlquileresView — tabla con filtros, estados Pagado/Señado/Pendiente, dropdown de seña — Completado.
+- [Unidad 11] Dashboard Financiero — refactor de GastosView (KPIs, transacciones unificadas, modal Nuevo Movimiento) — Completado.
+- [Unidad 12] Estabilización visual — `aspect-[4/3]` en imágenes; plan v0.2 en `context/v0.2-ideas.md` — Completado.
+
+### Fase 5 — Estabilización v0.1.1
+- [Unidad 12.1] Re-sync documental — progress-tracker, build plan, specs 13–19 — Completado.
+- [Unidad 13] Fixes de base de datos Supabase — migraciones en `supabase/migrations/` — Completado.
+- [Unidad 13.1] Fixes post-merge: fecha_hasta exclusiva en calendario, timezone UTC-3 en display de fechas, recambio resta del total, auto-fill inmueble al reservar desde calendario, skip modal en días libres — Completado.
 
 ## En Progreso
-- [Unidad 9.1] AvailabilityCalendar componente reusable con MonthGrid, DayDetailSheet.
-- [Unidad 9.2] Reemplazo de "Reservas" por "Calendario" en BottomNav.
-- [Unidad 9.3] Botones rápidos de duración (7, 14, 21 días) con verificación de overlap.
-- [Unidad 9.4] Fix de codificación Unicode en textos de UI.
-- [Unidad 9.5] Fix de timezone en `addDays` (parse manual de fecha para evitar desfase UTC-3).
-- [Unidad 9.6] Fix de inputs numéricos (`type="text" inputMode="numeric"` para permitir borrar y escribir).
-- [Unidad 9.7] Fix de validación visible en formulario (mensaje "Faltan campos requeridos").
-- [Unidad 9.8] Fix de cálculo de total (base + recambio) con reactividad correcta.
-- [Unidad 9.9] Refactor de calendario a galería por temporada — reemplazo de AvailabilityCalendar por YearGallery con MiniMonthGrid y SeasonFilter.
-- [Unidad 9.10] Vista AlquileresView (Gestión de Alquileres) — tabla con filtros (año, inmueble, estado, búsqueda), badges de estado, formato moneda, sin acciones. Ruta `/alquileres` + BottomNav.
-- [Unidad 9.11] Mejora AlquileresView: estados cambiados a Pagado/Señado/Pendiente. Nuevas columnas: Seña, Resto, Días. Badge clickeable con dropdown inline para cambiar estado + UPDATE en Supabase. Requiere columna `estado` en `alquileres`.
-
-## Completado Recientemente
-- [Unidad 10.1] Dashboard Financiero — Refactor completo de `GastosView.jsx`:
-  - KPIs: Ingresos (verde), Gastos (rojo), Balance (color dinámico), filtrados por período.
-  - Filtros: Todo el tiempo / Por año / Por mes con selectores condicionales.
-  - Tabla de transacciones unificada: combina `senas` (ingresos) y `gastos` (egresos), ordenada por fecha descendente.
-  - Modal "+ Nuevo Movimiento" con `createPortal`: Tipo (Gasto/Ingreso) cambia campos dinámicamente.
-    - Gasto → insert en `gastos` (inmueble, concepto, monto, fecha).
-    - Ingreso → insert en `senas` + update `total_senas_recibidas` en `alquileres`.
-  - Sin nuevas tablas ni migraciones. Reusa `gastos` y `senas`.
-
-## Completado Recientemente
-- [V0.1 Stabilization] Fix de imágenes en tarjetas y detalle: reemplazo de altura fija (`h-48`, `h-64`) por `aspect-[4/3]` para proporción consistente, más `bg-slate-100` de fondo neutral.
-- [Planning] Se creó `context/v0.2-ideas.md` con 8 ejes de mejora para la próxima versión.
+- Ninguno.
 
 ## Próximo a Hacer
-- Bucket `fotos-inmuebles` debe ser público con RLS policies en Supabase Storage.
-- Columnas `email`, `celular`, `direccion`, `observaciones` faltantes en `clientes`.
-- Actualizar CHECK constraint de `estado` en `clientes` para incluir `'archivado'`.
+1. [Unidad 14] Limpieza de lib compartida — ver `context/specs/14-lib-cleanup.md`.
+2. [Unidad 15] PWA básica — ver `context/specs/15-pwa-basics.md`.
+3. [Unidad 16] UX feedback (toasts + skeletons) — ver `context/specs/16-ux-feedback.md`.
+
+## Open Questions
+- ¿Instalar shadcn/ui en v0.2 o mantener Tailwind custom? (Decisión tomada: mantener Tailwind custom por ahora — ver `architecture.md`).
+- ¿Precios por temporada: Dic–Mar = alta y resto = baja, o reglas distintas por inmueble?
+- ¿PWA offline: cachear solo shell o también datos recientes de Supabase?
 
 ## Decisiones de Arquitectura
-- Se utilizará Supabase como BaaS.
-- Se adopta enfoque Mobile-First estricto con PWA.
-- Inputs numéricos usan `type="text" inputMode="numeric"` en vez de `type="number"` para evitar bugs de React con valores vacíos.
-- Parseo manual de fechas (`split('-')` + `new Date(año, mes-1, día)`) en `addDays` y `diasEntre` para evitar desfase por zona horaria.
-- Dropdown de estado en AlquileresView usa `position: fixed` + `getBoundingClientRect()` para no ser cortado por `overflow-x-auto` del contenedor tabla.
+- Supabase como BaaS; auth single-user con rutas protegidas.
+- Mobile-first estricto; bottom nav con 5 items: Inmuebles, Clientes, Calendario, Alquileres, Gastos.
+- `/reservas` accesible solo por navegación contextual (Calendario, Alquileres +, YearGallery) — no está en BottomNav.
+- UI: Tailwind CSS custom con `createPortal` para modales. **No shadcn/ui instalado** (decisión v0.1.1).
+- Inputs numéricos: `type="text" inputMode="numeric"` + filtro `replace(/\D/g, '')`.
+- Fechas: parseo manual local (`split('-')` + `new Date(año, mes-1, día)`) — nunca `new Date(isoString)`.
+- Dropdown de estado en AlquileresView: `position: fixed` + `getBoundingClientRect()`.
+- Cálculos financieros en funciones puras dentro de `/src/lib`.
 
-## Notas de Sesión
-- Se corrigió `addDays` en `ReservasView.jsx`: `new Date(dateStr)` parseaba como UTC, generando fechas incorrectas en huso Argentina (UTC-3). Se reemplazó por parseo manual.
-- Se corrigió `diasEntre` en `utils.js`: mismo problema de UTC, mismo fix.
-- Se reemplazaron todos los escapes Unicode en `ReservasView.jsx` por caracteres literales.
-- Se cambiaron inputs `type="number"` a `type="text" inputMode="numeric"` con filtro `replace(/\D/g, '')`.
-- `handleQuickDate` ahora setea `fechaHasta` optimistamente antes de la consulta Supabase, para que el total se vea al instante.
-- Se agregó validación visible con mensajes descriptivos ("Faltan campos requeridos: cliente, fecha desde...").
-- Refactor completo del calendario: se eliminó `AvailabilityCalendar.jsx` y `MonthGrid.jsx`. Se crearon `YearGallery.jsx` (orquestador con año y filtro), `MiniMonthGrid.jsx` (grilla comprimida de un mes), y `SeasonFilter.jsx` (panel de píldoras para filtrar meses). Default: Dic–Abr (temporada verano Argentina). Selector de año con flechas. Reemplazado en `CalendarioView.jsx` e `InmuebleDetalleView.jsx`.
-- Se creó `AlquileresView.jsx` (ruta `/alquileres`, 5to item en BottomNav): tabla de gestión con filtros (año, inmueble, estado, búsqueda).
-- Estados cambiados a Pagado/Señado/Pendiente (computados desde total_senas_recibidas vs monto_total). Columnas: Seña, Total (con desglose `días × precio + recambio`), Resto, Días (con rango). Badge clickeable → dropdown inline para cambiar estado: Pagado/Pendiente accion directa, Señado abre input editable para ingresar/modificar monto de la seña.
-- Se reemplazaron todos los escapes Unicode en `AlquileresView.jsx` por caracteres literales.
-- Se corrigió dropdown de estado cortado: se reemplazó `position: absolute` + `right-0` por `position: fixed` con posicionamiento dinámico vía `getBoundingClientRect()` para sortear el `overflow-x-auto` del contenedor de la tabla.
+## Notas de Sesión (última)
+- Unidad 13.1 (2026-07-09): Fixes de bugs en calendario y reservas.
+  - `MiniMonthGrid.jsx`/`YearGallery.jsx`: `day < r._hasta` en vez de `<=` — el último día (checkout) queda libre.
+  - `DayDetailSheet.jsx`/`ReservasView.jsx`/`ReservaDetalleView.jsx`: `new Date(isoString)` → `new Date(+p[0], +p[1]-1, +p[2])` para evitar shift de UTC-3 en Argentina.
+  - `ReservasView.jsx`: `total = dias * pNum - cNum` — el recambio ahora resta en vez de sumar.
+  - `YearGallery.jsx`: día libre → navega directo a `/reservas` con `inmuebleId` pre-seleccionado (vía `clickSourceId`). Día ocupado → modal como antes. Se eliminó el paso intermedio del modal para días libres.
+- Unidad 13 (2026-06-29): migraciones SQL idempotentes en `supabase/migrations/` (clientes + storage). Aplicar vía SQL Editor — ver `supabase/README.md`.
+- Fixes previos de reservas: timezone UTC-3, inputs numéricos, validación visible, total reactivo.
+- Calendario: YearGallery + MiniMonthGrid + SeasonFilter reemplazaron AvailabilityCalendar. Default temporada: Dic–Abr.
+- AlquileresView: estados computados, columnas Seña/Resto/Días, cambio de seña inline con UPDATE en Supabase.
+- GastosView: dashboard con KPIs, tabla unificada senas+gastos, modal dual Gasto/Ingreso.

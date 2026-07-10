@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
 import { CalendarDays, Users, ArrowRight, X } from 'lucide-react'
 
+function fmt(iso) {
+  if (!iso) return ''
+  var p = iso.split('-')
+  return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('es-AR')
+}
+
 export default function DayDetailSheet({ selectedDay, onClose, onNewReserva, reservasForDay, onViewReserva }) {
   const [show, setShow] = useState(false)
 
@@ -83,8 +89,8 @@ export default function DayDetailSheet({ selectedDay, onClose, onNewReserva, res
                         {r.clientes?.nombre} {r.clientes?.apellido}
                       </p>
                       <p className="text-text-muted text-xs">
-                        {new Date(r.fecha_desde).toLocaleDateString('es-AR')} →{' '}
-                        {new Date(r.fecha_hasta).toLocaleDateString('es-AR')}
+                        {fmt(r.fecha_desde)} →{' '}
+                        {fmt(r.fecha_hasta)}
                       </p>
                       {r.inmuebles?.nombre && (
                         <p className="text-text-muted text-xs">{r.inmuebles.nombre}</p>

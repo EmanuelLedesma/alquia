@@ -38,6 +38,7 @@ export default function YearGallery({ inmuebleId, compact }) {
   var [loading, setLoading] = useState(true)
   var [selectedDay, setSelectedDay] = useState(null)
   var [reservasForDay, setReservasForDay] = useState([])
+  var [clickSourceId, setClickSourceId] = useState(null)
 
   useEffect(function () {
     var query = supabase.from('inmuebles').select('id, nombre')
@@ -70,14 +71,26 @@ export default function YearGallery({ inmuebleId, compact }) {
     setSelectedDay(null)
   }
 
-  function handleDayClick(day, state) {
+  function handleDayClick(day, state, fromInmuebleId) {
+    setClickSourceId(fromInmuebleId)
+
+    if (state === 'free') {
+      navigate('/reservas', {
+        state: {
+          fechaDesde: formatDate(day),
+          inmuebleId: fromInmuebleId || inmuebleId || undefined,
+        },
+      })
+      return
+    }
+
     setSelectedDay(day)
     var parsed = reservas.map(function (r) {
       return { ...r, _desde: toDateOnly(r.fecha_desde), _hasta: toDateOnly(r.fecha_hasta) }
     })
     setReservasForDay(
       parsed.filter(function (r) {
-        return r._desde && r._hasta && day >= r._desde && day <= r._hasta
+        return r._desde && r._hasta && day >= r._desde && day < r._hasta
       })
     )
   }
@@ -85,8 +98,8 @@ export default function YearGallery({ inmuebleId, compact }) {
   function handleNewReserva(day) {
     navigate('/reservas', {
       state: {
-        fechaDesde: day.getFullYear() + '-' + String(day.getMonth() + 1).padStart(2, '0') + '-' + String(day.getDate()).padStart(2, '0'),
-        inmuebleId: inmuebleId || undefined,
+        fechaDesde: formatDate(day),
+        inmuebleId: clickSourceId || inmuebleId || undefined,
       },
     })
   }
@@ -179,7 +192,7 @@ export default function YearGallery({ inmuebleId, compact }) {
                     month={m}
                     year={year}
                     reservas={monthReservas}
-                    onDayClick={handleDayClick}
+                    onDayClick={function (d, s) { handleDayClick(d, s, inm.id) }}
                     selectedDay={selectedDay}
                     compact={compact}
                   />

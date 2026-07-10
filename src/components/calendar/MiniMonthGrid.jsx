@@ -35,7 +35,7 @@ export default function MiniMonthGrid({ month, year, reservas, onDayClick, selec
 
   function isOccupied(day) {
     return parsed.some(function (r) {
-      return r._desde && r._hasta && day >= r._desde && day <= r._hasta
+      return r._desde && r._hasta && day >= r._desde && day < r._hasta
     })
   }
 

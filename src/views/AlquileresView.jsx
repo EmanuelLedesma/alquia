@@ -52,6 +52,8 @@ export default function AlquileresView() {
   var [yearFilter, setYearFilter] = useState('2026')
   var [inmuebleFilter, setInmuebleFilter] = useState('')
   var [statusFilter, setStatusFilter] = useState('')
+  var [recambioPagado, setRecambioPagado] = useState({})
+  var [recambioGastoId, setRecambioGastoId] = useState({})
 
   function cerrarDropdown() {
     setOpenDropdownId(null)
@@ -220,6 +222,36 @@ export default function AlquileresView() {
     })
   }
 
+  function toggleRecambio(a) {
+    var id = a.id
+    if (recambioPagado[id]) {
+      var gastoId = recambioGastoId[id]
+      if (gastoId) {
+        supabase.from('gastos').delete().eq('id', gastoId).then(function () {
+          setRecambioGastoId(function (prev) { var n = { ...prev }; delete n[id]; return n })
+          setRecambioPagado(function (prev) { var n = { ...prev }; delete n[id]; return n })
+        })
+      } else {
+        setRecambioPagado(function (prev) { var n = { ...prev }; delete n[id]; return n })
+      }
+    } else {
+      var today = new Date().toISOString().slice(0, 10)
+      var data = {
+        concepto: 'Recambio - ' + (a.inmuebles?.nombre || ''),
+        monto: Number(a.costo_recambio),
+        fecha: today,
+        anio_temporada: Number(today.split('-')[0]),
+      }
+      if (a.inmueble_id) data.inmueble_id = Number(a.inmueble_id)
+      supabase.from('gastos').insert(data).select().single().then(function (res) {
+        if (res.data) {
+          setRecambioGastoId(function (prev) { return { ...prev, [id]: res.data.id } })
+          setRecambioPagado(function (prev) { return { ...prev, [id]: true } })
+        }
+      })
+    }
+  }
+
   function handleBadgeClick(e, a) {
     if (openDropdownId === a.id) {
       cerrarDropdown()
@@ -316,6 +348,7 @@ export default function AlquileresView() {
             <tr className="border-b border-slate-200">
               <th className="text-left text-text-muted font-medium px-4 py-3">Cliente</th>
               <th className="text-left text-text-muted font-medium px-4 py-3">Inmueble</th>
+              <th className="text-right text-text-muted font-medium px-4 py-3">Recambio</th>
               <th className="text-left text-text-muted font-medium px-4 py-3">Entrada</th>
               <th className="text-left text-text-muted font-medium px-4 py-3">Salida</th>
               <th className="text-center text-text-muted font-medium px-4 py-3">Días</th>
@@ -328,12 +361,12 @@ export default function AlquileresView() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={9} className="text-center text-text-muted py-8">Cargando...</td>
+                <td colSpan={10} className="text-center text-text-muted py-8">Cargando...</td>
               </tr>
             )}
             {!loading && filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="text-center text-text-muted py-8">No se encontraron alquileres.</td>
+                <td colSpan={10} className="text-center text-text-muted py-8">No se encontraron alquileres.</td>
               </tr>
             )}
             {!loading && filtered.map(function (a) {
@@ -348,18 +381,31 @@ export default function AlquileresView() {
                     {a.clientes?.nombre} {a.clientes?.apellido}
                   </td>
                   <td className="px-4 py-3 text-text-muted">{a.inmuebles?.nombre}</td>
+                  <td className={'px-4 py-3 text-right tabular-nums ' + (a.costo_recambio && !recambioPagado[a.id] ? 'text-red-500' : 'text-text-muted')}>
+                    {a.costo_recambio ? (
+                      <span className="inline-flex items-center justify-end gap-1.5">
+                        <span>{formatCurrency(a.costo_recambio)}</span>
+                        <input
+                          type="checkbox"
+                          checked={!!recambioPagado[a.id]}
+                          onChange={function () { toggleRecambio(a) }}
+                          className="w-3.5 h-3.5 rounded border-slate-300 text-primary accent-primary shrink-0"
+                        />
+                      </span>
+                    ) : '—'}
+                  </td>
                   <td className="px-4 py-3 text-text-muted">{formatDate(a.fecha_desde)}</td>
                   <td className="px-4 py-3 text-text-muted">{formatDate(a.fecha_hasta)}</td>
                   <td className="px-4 py-3 text-center text-text-main font-medium tabular-nums">
                     {dias}
                   </td>
                   <td className="px-4 py-3 text-right text-text-main font-medium">
-                    {status === 'pagado' ? '—' : senas > 0 ? formatCurrency(senas) : '—'}
+                    {senas > 0 ? formatCurrency(senas) : '—'}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="text-text-main font-medium">{formatCurrency(total)}</div>
                   </td>
-                  <td className="px-4 py-3 text-right text-text-main font-medium">
+                  <td className={'px-4 py-3 text-right font-medium ' + (resto > 0 ? 'text-red-500' : 'text-text-main')}>
                     {resto > 0 ? formatCurrency(resto) : '—'}
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -376,6 +422,33 @@ export default function AlquileresView() {
               )
             })}
           </tbody>
+          {filtered.length > 0 && (function () {
+            var sumSenas = 0, sumTotal = 0, sumResto = 0, sumRecambio = 0
+            filtered.forEach(function (a) {
+              var s = Number(a.total_senas_recibidas) || 0
+              var t = Number(a.monto_total) || 0
+              var r = Number(a.costo_recambio) || 0
+              sumSenas += s
+              sumTotal += t
+              sumResto += t - s
+              if (!recambioPagado[a.id]) sumRecambio += r
+            })
+            return (
+              <tfoot>
+                <tr className="border-t border-primary/30 text-sm font-semibold bg-primary text-white">
+                  <td colSpan={2} className="px-4 py-3">TOTAL</td>
+                  <td className={'px-4 py-3 text-right tabular-nums ' + (sumRecambio > 0 ? 'text-red-300' : '')}>{formatCurrency(sumRecambio)}</td>
+                  <td className="px-4 py-3" />
+                  <td className="px-4 py-3" />
+                  <td className="px-4 py-3" />
+                  <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(sumSenas)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(sumTotal)}</td>
+                  <td className={'px-4 py-3 text-right tabular-nums ' + (sumResto > 0 ? 'text-red-300' : '')}>{formatCurrency(sumResto)}</td>
+                  <td className="px-4 py-3" />
+                </tr>
+              </tfoot>
+            )
+          })()}
         </table>
       </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { CalendarDays, DollarSign, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, CalendarDays, DollarSign, AlertTriangle } from 'lucide-react'
 import { supabase } from '../services/supabase'
 import { diasEntre, isoToDisplay } from '../lib/utils'
 
@@ -15,7 +15,9 @@ function addDays(dateStr, days) {
 }
 
 function fmtDate(d) {
-  return new Date(d).toLocaleDateString('es-AR')
+  if (!d) return ''
+  var p = d.split('-')
+  return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('es-AR')
 }
 
 function DateInput({ value, onChange, label }) {
@@ -107,7 +109,7 @@ export default function ReservasView() {
   var cStr = costoRecambio === '' ? '' : String(Number(costoRecambio))
   var pNum = pStr === '' ? 0 : Number(pStr)
   var cNum = cStr === '' ? 0 : Number(cStr)
-  var total = dias * pNum + cNum
+  var total = dias * pNum - cNum
 
   useEffect(function () {
     var stateFecha = location.state && location.state.fechaDesde
@@ -154,8 +156,8 @@ export default function ReservasView() {
       .from('alquileres')
       .select('id, fecha_desde, fecha_hasta, clientes(nombre, apellido)')
       .eq('inmueble_id', Number(inmuebleId))
-      .lte('fecha_desde', nuevaHasta)
-      .gte('fecha_hasta', fechaDesde)
+      .lt('fecha_desde', nuevaHasta)
+      .gt('fecha_hasta', fechaDesde)
       .then(function (res) {
         setChecking(false)
 
@@ -218,6 +220,14 @@ export default function ReservasView() {
 
   return (
     <div className="p-4 space-y-4">
+      <button
+        type="button"
+        onClick={() => navigate('/calendario')}
+        className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text-main transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Calendario
+      </button>
       <h1 className="text-text-main text-xl font-bold">Nueva Reserva</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">

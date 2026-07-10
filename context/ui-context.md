@@ -18,6 +18,9 @@ La aplicación debe tener una estética limpia, profesional y relajante (temáti
 - Navegación: "Bottom Navigation Bar" (Barra de navegación inferior) fija en dispositivos móviles.
 
 ## Convenciones de Componentes
-- Todos los componentes interactivos deben usar `shadcn/ui`.
+- UI construida con Tailwind CSS custom (sin shadcn/ui en v0.1).
+- Modales: `createPortal` a `document.body`, overlay `bg-black/50`, panel `rounded-xl bg-surface`.
 - Iconografía: Utilizar exclusivamente `lucide-react`.
 - Los modales o "Drawers" (paneles deslizantes) deben deslizarse desde abajo en pantallas móviles.
+- Feedback de acciones: toasts bottom-center sobre el BottomNav (ver Unidad 16).
+- Estados de carga: skeleton `bg-slate-200 animate-pulse`, no texto "Cargando...".

@@ -4,6 +4,12 @@ import { DollarSign, Plus, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../services/supabase'
 
+function d(iso) {
+  if (!iso) return ''
+  var p = iso.split('-')
+  return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('es-AR')
+}
+
 export default function ReservaDetalleView() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -93,8 +99,8 @@ export default function ReservaDetalleView() {
           </p>
           <p>
             <span className="text-text-main">Fechas:</span>{' '}
-            {new Date(reserva.fecha_desde).toLocaleDateString('es-AR')} al{' '}
-            {new Date(reserva.fecha_hasta).toLocaleDateString('es-AR')}
+            {d(reserva.fecha_desde)} al{' '}
+            {d(reserva.fecha_hasta)}
           </p>
           <p className="flex items-center gap-1 text-base font-bold text-primary pt-1">
             <DollarSign className="w-4 h-4" />
@@ -127,7 +133,7 @@ export default function ReservaDetalleView() {
                 className="flex items-center justify-between text-sm bg-background rounded-lg px-3 py-2"
               >
                 <span className="text-text-muted">
-                  {new Date(s.fecha).toLocaleDateString('es-AR')}
+                  {d(s.fecha)}
                 </span>
                 <span className="text-text-main font-medium">
                   ${s.monto.toLocaleString('es-AR')}
