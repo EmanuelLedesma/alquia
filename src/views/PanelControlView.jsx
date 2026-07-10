@@ -336,7 +336,7 @@ export default function PanelControlView() {
 
   function openTemporada(inmueble) {
     var t = temporadas[inmueble.id] || {}
-    setTemporadaModal({ id: inmueble.id, nombre: inmueble.nombre, desde: t.desde || '', hasta: t.hasta || '' })
+    setTemporadaModal({ id: inmueble.id, nombre: inmueble.nombre, desde: t.desde || '', hasta: t.hasta || '', recambio: inmueble.costo_recambio || '' })
   }
 
   function saveTemporada() {
@@ -350,6 +350,15 @@ export default function PanelControlView() {
     updated[temporadaModal.id] = { desde: temporadaModal.desde, hasta: temporadaModal.hasta }
     setTemporadas(updated)
     localStorage.setItem('temporadas', JSON.stringify(updated))
+
+    var recambioNum = temporadaModal.recambio === '' ? null : Number(temporadaModal.recambio)
+    if (recambioNum !== null && recambioNum >= 0) {
+      supabase.from('inmuebles').update({ costo_recambio: recambioNum }).eq('id', temporadaModal.id).then()
+      setInmuebles(function (prev) {
+        return prev.map(function (x) { return x.id === temporadaModal.id ? Object.assign({}, x, { costo_recambio: recambioNum }) : x })
+      })
+    }
+
     setTemporadaModal(null)
   }
 
@@ -710,6 +719,22 @@ export default function PanelControlView() {
                   </div>
                   <p className="text-text-muted text-[10px] mt-1.5 tabular-nums">{oc.ocupados}/{oc.total} días</p>
                 </Link>
+                {(tieneTemp || d.costo_recambio > 0) && (
+                  <div className="px-0 pb-1 text-[10px] text-text-muted border-t border-slate-100 pt-1.5 mt-1.5 space-y-0.5">
+                    {tieneTemp && (
+                      <div className="flex items-center justify-between">
+                        <span>{temporadas[d.id].desde.slice(5)}→{temporadas[d.id].hasta.slice(5)}</span>
+                        <CalendarIcon className="w-2.5 h-2.5 text-primary" />
+                      </div>
+                    )}
+                    {d.costo_recambio > 0 && (
+                      <div className="flex items-center justify-between text-primary font-semibold">
+                        <span>Recambio</span>
+                        <span>{formatCurrency(d.costo_recambio)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <button
                   onClick={function () { openTemporada(d) }}
                   className={'absolute top-2 right-2 h-7 px-2 rounded-md text-[10px] font-semibold inline-flex items-center gap-1 ' + (tieneTemp ? 'bg-primary text-white' : 'bg-secondary text-primary hover:bg-primary hover:text-white transition-colors')}
@@ -1099,6 +1124,21 @@ export default function PanelControlView() {
                     className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
                   />
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm text-text-muted font-medium">Costo de recambio</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm font-medium">$</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={temporadaModal.recambio ? Number(temporadaModal.recambio).toLocaleString('es-AR') : ''}
+                    onChange={function (e) { setTemporadaModal(function (prev) { return Object.assign({}, prev, { recambio: e.target.value.replace(/\D/g, '') }) }) }}
+                    placeholder="0"
+                    className="w-full h-11 pl-7 pr-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm"
+                  />
+                </div>
+                <p className="text-[11px] text-text-muted">Se guarda en el inmueble y se autocompleta en reservas.</p>
               </div>
             </div>
             <div className="p-4 border-t border-slate-200 space-y-2">

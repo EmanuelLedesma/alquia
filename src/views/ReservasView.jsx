@@ -99,7 +99,7 @@ export default function ReservasView() {
   var [fechaDesde, setFechaDesde] = useState(location.state && location.state.fechaDesde || '')
   var [fechaHasta, setFechaHasta] = useState('')
   var [precioPorDia, setPrecioPorDia] = useState('50000')
-  var [costoRecambio, setCostoRecambio] = useState('15000')
+  var [costoRecambio, setCostoRecambio] = useState('')
   var [overlapError, setOverlapError] = useState(null)
   var [submitError, setSubmitError] = useState('')
   var [checking, setChecking] = useState(false)
@@ -124,7 +124,17 @@ export default function ReservasView() {
     ]).then(function (r) {
       var inmueblesRes = r[0]
       var clientesRes = r[1]
-      if (inmueblesRes.data) setInmuebles(inmueblesRes.data)
+      if (inmueblesRes.data) {
+        setInmuebles(inmueblesRes.data)
+        if (stateInmueble) {
+          var sel = inmueblesRes.data.find(function (x) { return String(x.id) === String(stateInmueble) })
+          if (sel && Number(sel.costo_recambio) > 0) {
+            setCostoRecambio(String(Number(sel.costo_recambio)))
+          } else {
+            setCostoRecambio('')
+          }
+        }
+      }
       if (clientesRes.data) setClientes(clientesRes.data)
       setLoading(false)
     })
@@ -251,9 +261,9 @@ export default function ReservasView() {
               setOverlapError(null)
               if (newId) {
                 var sel = inmuebles.find(function (x) { return String(x.id) === newId })
-                if (sel && Number(sel.costo_recambio) > 0 && costoRecambio === '') {
-                  setCostoRecambio(String(Number(sel.costo_recambio)))
-                }
+                setCostoRecambio(sel && Number(sel.costo_recambio) > 0 ? String(Number(sel.costo_recambio)) : '')
+              } else {
+                setCostoRecambio('')
               }
             }}
             className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-surface text-text-main text-sm appearance-none"
